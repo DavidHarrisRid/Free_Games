@@ -1,0 +1,2711 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blackjack + Hi-Lo Full Trainer</title>
+  <style>
+    :root {
+      --bg: #0e1f17;
+      --panel: #142b20;
+      --panel2: #193629;
+      --text: #f4f7f2;
+      --muted: #b8c8bd;
+      --accent: #f2c94c;
+      --danger: #ff7a7a;
+      --good: #80e09b;
+      --newRound: #6ee7b7;
+      --blue: #9ee7ff;
+      --purple: #e2ccff;
+      --line: rgba(255,255,255,.16);
+      --card: #fbfbf7;
+      --cardText: #1c1c1c;
+      --red: #c0392b;
+      --game-card-scale: 1.15;
+      --shadow: 0 12px 30px rgba(0,0,0,.25);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1f573c 0%, var(--bg) 50%, #08120d 100%);
+      color: var(--text);
+    }
+
+    header {
+      padding: 24px 18px 10px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 42px); letter-spacing: -0.04em; }
+    h2 { letter-spacing: -.025em; }
+    h3 { letter-spacing: -.02em; }
+    .sub { color: var(--muted); margin: 0; line-height: 1.45; max-width: 940px; }
+
+    .tabs {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 8px 18px 0;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+    }
+
+    .tab-btn {
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      padding: 10px 13px;
+      color: var(--muted);
+      background: rgba(0,0,0,.18);
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      color: #1d1a08;
+      background: var(--accent);
+      border-color: rgba(0,0,0,.12);
+    }
+
+    main.app {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 14px 18px 44px;
+    }
+
+    .tab-page { display: none; background: transparent; border: 0; box-shadow: none; border-radius: 0; }
+    .tab-page.active { display: block; }
+
+    section, aside, .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel { padding: 14px; }
+    .play-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 1030px) { .play-grid { grid-template-columns: 1fr; } }
+
+    .game { padding: 16px; }
+    .side { display: grid; gap: 16px; align-content: start; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    button, select, input[type="number"] {
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.09);
+      color: var(--text);
+      font-weight: 750;
+    }
+    select option { color: #111; }
+    button { cursor: pointer; transition: transform .05s ease, background .15s ease, opacity .15s ease; }
+    button:hover:not(:disabled) { background: rgba(255,255,255,.16); }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    button.primary { background: var(--accent); color: #1d1a08; border-color: rgba(0,0,0,.1); }
+    button.primary:hover:not(:disabled) { background: #ffd95e; }
+    button.new-round { background: var(--newRound); color: #062317; border-color: rgba(0,0,0,.12); }
+    button.new-round:hover:not(:disabled) { background: #8cf0c7; }
+    button.danger { background: rgba(255,122,122,.18); }
+    button.small { padding: 7px 9px; border-radius: 10px; font-size: 12px; }
+
+    label.toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      user-select: none;
+      font-weight: 750;
+    }
+    input[type="checkbox"] { width: 18px; height: 18px; }
+    input[type="number"] { width: 86px; }
+
+    .play-layout {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .action-rail {
+      position: sticky;
+      top: 66px;
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      background: rgba(0,0,0,.16);
+      min-height: 548px;
+      align-content: start;
+    }
+    .action-rail button { width: 100%; text-align: left; }
+    .action-label { color: var(--muted); font-size: 12px; font-weight: 950; text-transform: uppercase; letter-spacing: .08em; margin: 2px 0 0; }
+    .active-action-note { color: var(--muted); line-height: 1.35; font-size: 12px; padding: 8px; border-radius: 12px; background: rgba(0,0,0,.16); border: 1px solid rgba(255,255,255,.09); }
+
+    @media (max-width: 760px) {
+      .play-layout { grid-template-columns: 1fr; }
+      .action-rail { position: static; min-height: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .action-label, .active-action-note { grid-column: 1 / -1; }
+    }
+
+    .table {
+      min-height: 548px;
+      background: radial-gradient(circle at 50% 16%, rgba(255,255,255,.08), transparent 36%), rgba(0,0,0,.12);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 20px;
+      padding: 16px;
+      overflow: hidden;
+    }
+    .zone { margin-bottom: 18px; }
+    .zone-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .zone-title h2 { margin: 0; font-size: 17px; }
+    .total { color: var(--muted); font-weight: 800; }
+
+    .cards { display: flex; flex-wrap: wrap; gap: 10px; min-height: 92px; align-items: flex-start; }
+    .card {
+      width: 58px;
+      height: 82px;
+      padding: 8px;
+      background: var(--card);
+      color: var(--cardText);
+      border-radius: 10px;
+      box-shadow: 0 8px 14px rgba(0,0,0,.22);
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(0,0,0,.2);
+      position: relative;
+      font-size: 20px;
+      font-weight: 900;
+      animation: dealIn .22s ease-out both;
+    }
+    @keyframes dealIn { from { transform: translateY(-10px) scale(.97); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+    .card small { position: absolute; top: 9px; left: 10px; font-size: 12px; }
+    .card .suit { position: absolute; bottom: 8px; right: 10px; font-size: 16px; }
+    .card.red { color: var(--red); }
+    .card.hidden {
+      color: transparent;
+      background: repeating-linear-gradient(45deg, #1d3f30, #1d3f30 8px, #24523c 8px, #24523c 16px);
+      border-color: rgba(255,255,255,.25);
+    }
+    .card.hidden::after { content: "?"; color: rgba(255,255,255,.88); font-size: 25px; font-weight: 950; }
+    .count-help-value {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.25em;
+      padding: 1px 5px;
+      border-radius: 7px;
+      font-weight: 950;
+      text-shadow: 0 1px 1px rgba(0,0,0,.22);
+    }
+    .count-help-value.plus { color: #1f9f4b; }
+    .count-help-value.zero { color: #8c9196; text-shadow: none; }
+    .count-help-value.minus { color: #d6a400; }
+    .card.hidden .count-help-value { display: none; }
+    .count-stat { position: relative; }
+    .count-stat::after {
+      content: attr(data-hover);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%) translateY(4px);
+      width: max-content;
+      max-width: 230px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(4, 13, 9, .96);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 10px 24px rgba(0,0,0,.36);
+      font-size: 12px;
+      font-weight: 900;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .12s ease, transform .12s ease;
+      z-index: 30;
+    }
+    .count-stat:hover::after,
+    .count-stat:focus-within::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .seat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 820px) { .seat-grid { grid-template-columns: 1fr; } }
+    .seat {
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.075);
+      background: rgba(255,255,255,.032);
+      border-radius: 16px;
+      min-height: 196px;
+    }
+    .seat.empty { opacity: .6; }
+    .seat.active { outline: 1px solid rgba(242,201,76,.42); background: rgba(242,201,76,.035); box-shadow: 0 0 0 3px rgba(242,201,76,.055); }
+    .seat.bot-active { outline: 1px solid rgba(158,231,255,.42); background: rgba(158,231,255,.035); box-shadow: 0 0 0 3px rgba(158,231,255,.05); }
+    .seat-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .seat-title { font-weight: 950; }
+    .seat-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .seat-controls select { max-width: 92px; padding: 7px 8px; border-radius: 10px; }
+    .seat-controls input { width: 74px; padding: 7px 8px; border-radius: 10px; }
+
+    .hands { display: grid; gap: 10px; }
+    .hand {
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,.075);
+      background: rgba(0,0,0,.10);
+      border-radius: 14px;
+    }
+    .hand.active { outline: 1px solid rgba(242,201,76,.42); background: rgba(242,201,76,.035); box-shadow: inset 0 0 0 1px rgba(242,201,76,.055); }
+    .hand.bot-active { outline: 1px solid rgba(158,231,255,.42); background: rgba(158,231,255,.035); box-shadow: inset 0 0 0 1px rgba(158,231,255,.05); }
+    .hand.done { opacity: .88; }
+    .hand-head { display:flex; justify-content:space-between; gap:10px; margin-bottom: 9px; color: var(--muted); font-weight: 850; align-items: center; flex-wrap: wrap; }
+    .hand-name { color: var(--muted); }
+    .hand-total-badge, .total-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(242,201,76,.42);
+      background: rgba(242,201,76,.16);
+      color: var(--text);
+      font-weight: 950;
+      letter-spacing: -.02em;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+    }
+    .total-badge { font-size: 15px; }
+    .hand-total-badge { font-size: 15px; }
+    .hand.active .hand-total-badge { background: rgba(242,201,76,.18); border-color: rgba(242,201,76,.46); }
+    .result.win, .profit-plus { color: var(--good); }
+    .result.blackjack { color: var(--newRound); }
+    .result.lose, .profit-minus { color: var(--danger); }
+    .result.push { color: var(--accent); }
+
+    .message {
+      margin-top: 14px;
+      border-left: 4px solid var(--accent);
+      padding: 11px 12px;
+      background: rgba(0,0,0,.18);
+      border-radius: 12px;
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .strategy-panel { border-color: rgba(242,201,76,.24); background: linear-gradient(180deg, rgba(242,201,76,.08), rgba(255,255,255,.025)); }
+    .advice { display: grid; gap: 8px; padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+    .advice-kicker { color: var(--muted); font-size: 11px; font-weight: 950; text-transform: uppercase; letter-spacing: .09em; }
+    .advice-action {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      min-width: 126px;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 14px;
+      background: rgba(242,201,76,.16);
+      border: 1px solid rgba(242,201,76,.35);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      font-size: 26px;
+      font-weight: 950;
+      letter-spacing: -.05em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+    .advice[data-move="Hit"] .advice-action { color: #d8f7ff; border-color: rgba(216,247,255,.30); background: rgba(216,247,255,.10); }
+    .advice[data-move="Stand"] .advice-action { color: var(--good); border-color: rgba(128,224,155,.34); background: rgba(128,224,155,.11); }
+    .advice[data-move="Double down"] .advice-action { color: var(--accent); border-color: rgba(242,201,76,.48); background: rgba(242,201,76,.15); }
+    .advice[data-move="Split"] .advice-action { color: var(--purple); border-color: rgba(230,211,255,.34); background: rgba(230,211,255,.11); }
+    .advice-reason { color: var(--muted); line-height: 1.45; padding: 10px 11px; border-radius: 12px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.08); }
+    .advice.hidden-advice .advice-action, .advice.hidden-advice .advice-reason { filter: blur(6px); user-select: none; }
+
+    .stats { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat { background: rgba(0,0,0,.16); border: 1px solid rgba(255,255,255,.10); border-radius: 13px; padding: 10px; }
+    .stat .label { color: var(--muted); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+    .stat .value { margin-top: 4px; font-size: 24px; font-weight: 950; }
+    .muted { color: var(--muted); }
+    .rules { margin: 0; padding-left: 18px; color: var(--muted); line-height: 1.55; }
+    .pill { display:inline-block; padding:4px 8px; border:1px solid rgba(255,255,255,.14); border-radius:999px; color: var(--muted); font-size:12px; font-weight:850; }
+    .deck-status { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 999px; background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.16); color: var(--muted); font-size: 12px; font-weight: 850; letter-spacing: .01em; }
+    .deck-status.fresh { color: var(--good); border-color: rgba(128,224,155,.42); background: rgba(128,224,155,.12); }
+
+    .learning-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .75fr); gap: 16px; align-items: start; }
+    @media (max-width: 900px) { .learning-grid { grid-template-columns: 1fr; } }
+    .wide-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 860px) { .wide-grid { grid-template-columns: 1fr; } }
+
+    .seen-list, .deviation-list { display:flex; gap: 8px; flex-wrap: wrap; align-content: flex-start; max-height: 320px; overflow: auto; padding: 10px; background: rgba(0,0,0,.13); border: 1px solid rgba(255,255,255,.09); border-radius: 14px; }
+    .seen-card-pill { display:inline-flex; gap: 5px; align-items:center; padding: 6px 8px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.10); font-weight: 850; }
+    .seen-card-pill.red { color: #ffb0a9; }
+
+    .drill-grid { display:grid; grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr); gap: 14px; align-items:start; }
+    @media (max-width: 760px) { .drill-grid { grid-template-columns: 1fr; } }
+    .drill-card-wrap { display:flex; align-items:center; gap:12px; flex-wrap: wrap; margin: 10px 0; }
+    #drillCard .card { width: 112px; height: 156px; border-radius: 18px; font-size: 46px; }
+    #drillCard .card small { top: 12px; left: 14px; font-size: 20px; }
+    #drillCard .card .suit { bottom: 10px; right: 14px; font-size: 30px; }
+    #drillCard .count-help-value { padding: 2px 8px; border-radius: 10px; }
+    .drill-feedback { min-height: 24px; font-weight: 850; line-height: 1.45; }
+    .good { color: var(--good); }
+    .bad { color: var(--danger); }
+
+    .strategy-table-wrap { overflow-x: auto; margin-top: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,.11); }
+    table.basic-table { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; background: rgba(0,0,0,.12); font-size: 13px; }
+    .basic-table th, .basic-table td { padding: 9px 10px; text-align: center; border-right: 1px solid rgba(255,255,255,.08); border-bottom: 1px solid rgba(255,255,255,.08); white-space: nowrap; }
+    .basic-table th { color: var(--text); background: rgba(255,255,255,.08); font-weight: 950; }
+    .basic-table td:first-child, .basic-table th:first-child { text-align: left; position: sticky; left: 0; z-index: 1; background: rgba(20,43,32,.98); font-weight: 950; }
+    .basic-table tr:last-child td { border-bottom: 0; }
+    .basic-table td:last-child, .basic-table th:last-child { border-right: 0; }
+    .table-group-title { margin: 18px 0 8px; font-size: 15px; color: var(--text); letter-spacing: -.02em; }
+    .legend-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; color: var(--muted); line-height: 1.45; }
+
+
+    /* Layout polish pass: wider, clearer, less dense. */
+    header, .tabs, main.app { max-width: 1640px; }
+    body { background: radial-gradient(circle at 50% -10%, #2a6b49 0%, #123024 44%, #07120d 100%); }
+    header { padding-top: 28px; }
+    .sub { max-width: 1120px; }
+    main.app { padding: 18px 22px 56px; }
+
+    section, aside, .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(3,12,8,.28));
+      border-color: rgba(255,255,255,.20);
+      box-shadow: 0 16px 42px rgba(0,0,0,.36);
+    }
+    .panel { padding: 18px; }
+
+    .play-grid {
+      grid-template-columns: minmax(0, 1fr) 315px;
+      gap: 20px;
+    }
+    .game { padding: 20px; }
+    .side { gap: 18px; }
+    .side .panel { padding: 16px; }
+    @media (min-width: 1320px) {
+      .play-grid { grid-template-columns: minmax(0, 1fr) 300px; }
+    }
+    @media (max-width: 1100px) { .play-grid { grid-template-columns: 1fr; } }
+
+    .controls {
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      background: rgba(0,0,0,.14);
+    }
+    button, select, input[type="number"] { min-height: 42px; }
+    .tab-btn { padding: 11px 16px; }
+
+    .play-layout {
+      grid-template-columns: 172px minmax(0, 1fr);
+      gap: 18px;
+    }
+    .action-rail {
+      min-height: 640px;
+      padding: 14px;
+      gap: 12px;
+      background: rgba(0,0,0,.24);
+      border-color: rgba(255,255,255,.20);
+    }
+    .action-rail button { min-height: 46px; font-size: 14px; }
+
+    .table {
+      min-height: 640px;
+      padding: 22px;
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255,255,255,.11), transparent 34%),
+        radial-gradient(circle at 50% 110%, rgba(242,201,76,.10), transparent 30%),
+        rgba(0,0,0,.18);
+      border-color: rgba(255,255,255,.18);
+    }
+    .zone { margin-bottom: 24px; }
+    .zone-title { margin-bottom: 14px; }
+    .zone-title h2 { font-size: 20px; }
+
+    .cards { gap: 13px; min-height: 110px; }
+    .card {
+      width: calc(70px * var(--game-card-scale));
+      height: calc(98px * var(--game-card-scale));
+      padding: calc(10px * var(--game-card-scale));
+      border-radius: calc(13px * var(--game-card-scale));
+      font-size: calc(24px * var(--game-card-scale));
+      animation: none;
+      box-shadow: 0 12px 20px rgba(0,0,0,.28);
+      will-change: transform;
+    }
+    .card.card-new { animation: cardFlipIn .30s ease-out both; }
+    .card.card-flip { animation: cardFlipReveal .36s ease-out both; }
+    @keyframes cardFlipIn {
+      0% { transform: perspective(700px) rotateY(86deg) translateY(-5px); opacity: .72; }
+      55% { transform: perspective(700px) rotateY(-8deg) translateY(0); opacity: 1; }
+      100% { transform: perspective(700px) rotateY(0deg) translateY(0); opacity: 1; }
+    }
+    @keyframes cardFlipReveal {
+      0% { transform: perspective(700px) rotateY(90deg) scale(.98); opacity: .78; }
+      55% { transform: perspective(700px) rotateY(-7deg) scale(1); opacity: 1; }
+      100% { transform: perspective(700px) rotateY(0deg) scale(1); opacity: 1; }
+    }
+    .card small { top: calc(13px * var(--game-card-scale)); left: calc(14px * var(--game-card-scale)); font-size: calc(13px * var(--game-card-scale)); }
+    .card .suit { bottom: calc(12px * var(--game-card-scale)); right: calc(14px * var(--game-card-scale)); font-size: calc(18px * var(--game-card-scale)); }
+
+    .seat-grid { gap: 18px; }
+    .seat {
+      min-height: 260px;
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.042);
+      border-color: rgba(255,255,255,.095);
+    }
+    .seat-head { margin-bottom: 14px; }
+    .seat-title { font-size: 18px; }
+    .seat-controls select { max-width: 105px; }
+    .seat-controls input { width: 86px; }
+    .hand {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.12);
+      border-color: rgba(255,255,255,.085);
+    }
+    .hand-head { font-size: 14px; }
+    .hand-total-badge, .total-badge {
+      padding: 9px 14px;
+      font-size: 17px;
+      border-color: rgba(242,201,76,.46);
+      background: rgba(242,201,76,.16);
+    }
+    .total-badge { font-size: 18px; }
+
+    .message {
+      margin-top: 18px;
+      padding: 14px 16px;
+      background: rgba(0,0,0,.24);
+      border-color: var(--accent);
+      font-weight: 750;
+    }
+
+    .advice-under-game {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .strategy-panel {
+      border-color: rgba(242,201,76,.38);
+      background: linear-gradient(180deg, rgba(242,201,76,.115), rgba(0,0,0,.20));
+    }
+    .advice {
+      min-height: 178px;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.24);
+      border-color: rgba(255,255,255,.18);
+    }
+    .advice-action {
+      min-width: 168px;
+      padding: 10px 16px;
+      border-radius: 16px;
+      font-size: 32px;
+    }
+    .advice-reason {
+      font-size: 15px;
+      line-height: 1.55;
+      color: #d9e6dd;
+      background: rgba(255,255,255,.075);
+    }
+    .advice-kicker { color: #d2ded5; }
+
+    .stats { gap: 12px; }
+    .stat {
+      padding: 13px;
+      background: rgba(0,0,0,.22);
+      border-color: rgba(255,255,255,.15);
+    }
+    .stat .value { font-size: 26px; }
+    .deck-status {
+      padding: 10px 13px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.28);
+      max-width: 100%;
+    }
+
+    .learning-grid {
+      grid-template-columns: minmax(0, 1.35fr) minmax(360px, .85fr);
+      gap: 22px;
+    }
+    #tab-deviations .learning-grid {
+      grid-template-columns: minmax(0, 1.8fr) minmax(360px, .7fr);
+    }
+    #tab-counter .learning-grid, #tab-drills .learning-grid {
+      grid-template-columns: minmax(0, 1.25fr) minmax(380px, .95fr);
+    }
+    .wide-grid { gap: 16px; }
+    .seen-list, .deviation-list {
+      max-height: 440px;
+      min-height: 180px;
+      padding: 14px;
+      background: rgba(0,0,0,.22);
+      border-color: rgba(255,255,255,.14);
+    }
+    .drill-grid {
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
+      gap: 20px;
+    }
+    .strategy-table-wrap { border-color: rgba(255,255,255,.18); }
+    table.basic-table { font-size: 14px; min-width: 920px; }
+    .basic-table th, .basic-table td { padding: 11px 12px; }
+    .basic-table td.action-hit, .pill.action-hit {
+      background: rgba(158,231,255,.18);
+      color: #dff8ff;
+      box-shadow: inset 0 0 0 1px rgba(158,231,255,.24);
+      font-weight: 950;
+    }
+    .basic-table td.action-stand, .pill.action-stand {
+      background: rgba(128,224,155,.18);
+      color: #ddffe7;
+      box-shadow: inset 0 0 0 1px rgba(128,224,155,.24);
+      font-weight: 950;
+    }
+    .basic-table td.action-double, .pill.action-double {
+      background: rgba(242,201,76,.22);
+      color: #fff3bf;
+      box-shadow: inset 0 0 0 1px rgba(242,201,76,.30);
+      font-weight: 950;
+    }
+    .basic-table td.action-split, .pill.action-split {
+      background: rgba(226,204,255,.20);
+      color: #f1e8ff;
+      box-shadow: inset 0 0 0 1px rgba(226,204,255,.30);
+      font-weight: 950;
+    }
+
+    @media (max-width: 980px) {
+      .advice-under-game, .learning-grid, #tab-deviations .learning-grid, #tab-counter .learning-grid, #tab-drills .learning-grid { grid-template-columns: 1fr; }
+      .play-layout { grid-template-columns: 1fr; }
+      .action-rail { position: static; min-height: auto; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .action-label, .active-action-note { grid-column: 1 / -1; }
+      .table { min-height: auto; }
+    }
+    @media (max-width: 760px) {
+      main.app { padding-left: 14px; padding-right: 14px; }
+      .action-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .card { width: calc(62px * var(--game-card-scale)); height: calc(88px * var(--game-card-scale)); }
+    }
+
+
+    /* Global settings overlay + cleaner table-first layout. */
+    .tabs { align-items: center; }
+    .settings-open-btn {
+      margin-left: auto;
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 999px;
+      padding: 11px 16px;
+      color: var(--text);
+      background: rgba(0,0,0,.30);
+      font-weight: 950;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0,0,0,.18);
+    }
+    .settings-open-btn:hover { background: rgba(255,255,255,.14); }
+    .settings-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 74px 22px 22px;
+    }
+    .settings-modal.open { display: flex; }
+    .settings-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.46);
+      backdrop-filter: blur(6px);
+    }
+    .settings-dialog {
+      position: relative;
+      width: min(560px, calc(100vw - 32px));
+      max-height: calc(100vh - 96px);
+      overflow: auto;
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.24);
+      background: linear-gradient(180deg, rgba(25,54,41,.98), rgba(9,20,15,.98));
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+    }
+    .settings-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .settings-head h2 { margin: 0 0 5px; }
+    .settings-head p { margin: 0; color: var(--muted); line-height: 1.4; }
+    .settings-close-btn {
+      width: 42px;
+      height: 42px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 50%;
+      padding: 0;
+      font-size: 28px;
+      line-height: 1;
+    }
+    .settings-controls {
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .settings-controls > * { min-width: 0; }
+    .settings-controls label.toggle {
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.16);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .settings-controls button { text-align: left; }
+    .card-scale-control { grid-column: 1 / -1; gap: 12px; }
+    .card-scale-control input[type="range"] { flex: 1; min-width: 160px; accent-color: var(--accent); }
+    #cardScaleValue { color: var(--accent); font-weight: 950; min-width: 46px; text-align: right; }
+    .settings-shoe-status { margin-top: 12px; width: 100%; justify-content: center; }
+
+    .advice-above-game {
+      margin-top: 0;
+      margin-bottom: 18px;
+    }
+    .advice-above-game .advice { min-height: 140px; }
+    .advice-above-game .advice-action { font-size: 28px; }
+    .action-rail { align-content: start; }
+    .action-label:not(:first-child) {
+      margin-top: 8px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .play-layout { align-items: stretch; }
+    .table { min-height: 660px; }
+    .cards { min-height: calc(102px * var(--game-card-scale)); }
+    .seat { min-height: calc(250px + (42px * var(--game-card-scale))); }
+
+    @media (max-width: 760px) {
+      .settings-open-btn { margin-left: 0; }
+      .settings-modal { justify-content: center; padding-top: 70px; }
+      .settings-controls { grid-template-columns: 1fr; }
+    }
+
+
+    /* Requested layout cleanup: recommendations between table and trackers, no page header, stable columns. */
+    .tabs {
+      padding-top: 12px;
+      padding-bottom: 8px;
+      background: linear-gradient(180deg, rgba(8,18,13,.92), rgba(8,18,13,.58));
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    main.app { padding-top: 12px; }
+    .play-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 310px) 300px;
+      gap: 16px;
+      align-items: start;
+    }
+    .advice-column {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+      position: sticky;
+      top: 76px;
+    }
+    .advice-column .panel { padding: 14px; }
+    .advice-column .advice {
+      min-height: 220px;
+      align-content: start;
+    }
+    .advice-column .advice-action {
+      font-size: 28px;
+      min-width: 150px;
+    }
+    .advice-column .advice-reason {
+      min-height: 96px;
+      font-size: 14px;
+    }
+    .advice.hidden-advice { display: none !important; }
+    .action-rail .deck-status {
+      width: 100%;
+      justify-content: flex-start;
+      border-radius: 13px;
+      line-height: 1.25;
+      white-space: normal;
+    }
+    #newShoeBtn {
+      background: rgba(255,255,255,.075);
+      border-color: rgba(255,255,255,.20);
+    }
+    #newShoeBtn:hover:not(:disabled) { background: rgba(255,255,255,.15); }
+    .settings-head h2 { font-size: 20px; }
+    .settings-head p { display: none; }
+
+    @media (max-width: 1260px) {
+      .play-grid { grid-template-columns: minmax(0, 1fr) 300px; }
+      .game { grid-row: 1 / span 2; }
+      .advice-column { grid-column: 2; grid-row: 1; position: static; }
+      .side { grid-column: 2; grid-row: 2; }
+    }
+    @media (max-width: 980px) {
+      .play-grid { grid-template-columns: 1fr; }
+      .game, .advice-column, .side { grid-column: auto; grid-row: auto; }
+      .advice-column { position: static; }
+    }
+
+    /* Compact trainer layout + help modal cleanup. */
+    header { display: none; }
+    .help-open-btn {
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 999px;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      color: var(--text);
+      background: rgba(0,0,0,.30);
+      font-weight: 950;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0,0,0,.18);
+    }
+    .help-open-btn:hover { background: rgba(255,255,255,.14); }
+    .help-body {
+      display: grid;
+      gap: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      font-weight: 650;
+    }
+    .help-card {
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.11);
+    }
+    .help-card strong { display:block; color: var(--text); margin-bottom: 5px; }
+    .help-card ul { margin: 7px 0 0; padding-left: 18px; }
+
+    .play-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(240px, 285px) minmax(180px, 220px);
+      gap: 14px;
+    }
+    .play-layout { grid-template-columns: 156px minmax(0, 1fr); gap: 14px; }
+    .action-rail { min-height: 640px; gap: 10px; }
+    .action-rail button { min-height: 44px; }
+    #newShoeBtn {
+      background: rgba(255,122,122,.13);
+      border-color: rgba(255,122,122,.34);
+    }
+    #newShoeBtn:hover:not(:disabled) { background: rgba(255,122,122,.22); }
+
+    .advice-column { gap: 12px; }
+    .advice-column .panel, .side .panel { padding: 12px; }
+    .advice-column .panel h2, .side .panel h2 { display: none !important; }
+    .advice-column .advice { min-height: 178px; }
+    .advice-column .advice-action { font-size: 25px; min-width: 132px; }
+    .advice-column .advice-reason { min-height: 82px; font-size: 13px; }
+
+    .side { gap: 12px; }
+    .side .stats { grid-template-columns: 1fr; gap: 8px; }
+    .side .stat { padding: 10px; }
+    .side .stat .value { font-size: 22px; }
+    .side .panel > p.muted,
+    #tab-counter .rules,
+    #tab-counter h3,
+    #tab-deviations .panel > p.muted,
+    #tab-drills .panel p.muted:not(.drill-feedback) {
+      display: none !important;
+    }
+
+    .table .cards { gap: 0; overflow: visible; padding-right: calc(22px * var(--game-card-scale)); }
+    .table .cards .card + .card { margin-left: calc(-18px * var(--game-card-scale)); }
+    .table .cards .card { flex: 0 0 auto; }
+    #dealerCards { justify-content: center; padding-left: calc(22px * var(--game-card-scale)); }
+    .seat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .seat { min-width: 0; padding: 14px; }
+    .seat-controls select { max-width: 96px; }
+    .seat-controls input { width: 78px; }
+
+    @media (min-width: 1500px) {
+      main.app, .tabs { max-width: 1760px; }
+      .play-grid { grid-template-columns: minmax(0, 1fr) 285px 210px; }
+    }
+    @media (max-width: 1260px) {
+      .play-grid { grid-template-columns: minmax(0, 1fr) 280px; }
+      .side .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 980px) {
+      .play-grid { grid-template-columns: 1fr; }
+      .play-layout { grid-template-columns: 1fr; }
+      .side .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .side .stats { grid-template-columns: 1fr; }
+      .help-open-btn { margin-left: 0; }
+    }
+
+
+    /* Final fixed play-page layout + inline help behavior. */
+    body.play-tab-active { overflow: hidden; }
+    body.play-tab-active main.app {
+      height: calc(100vh - 70px);
+      overflow: hidden;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    body.play-tab-active #tab-play.active { height: 100%; }
+    body.play-tab-active #tab-play .play-grid {
+      height: 100%;
+      min-height: 0;
+      grid-template-columns: minmax(0, 1fr) minmax(230px, 270px) minmax(170px, 205px);
+      align-items: stretch;
+    }
+    body.play-tab-active #tab-play .game,
+    body.play-tab-active #tab-play .advice-column,
+    body.play-tab-active #tab-play .side {
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    body.play-tab-active #tab-play .game {
+      display: flex;
+      flex-direction: column;
+      padding: 14px;
+    }
+    body.play-tab-active #tab-play .play-layout {
+      flex: 1 1 auto;
+      min-height: 0;
+      grid-template-columns: 150px minmax(0, 1fr);
+    }
+    body.play-tab-active #tab-play .action-rail {
+      position: static;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      padding: 12px;
+      gap: 8px;
+    }
+    body.play-tab-active #tab-play .action-rail button { min-height: 40px; }
+    body.play-tab-active #tab-play .table {
+      height: 100%;
+      min-height: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    body.play-tab-active #tab-play .table > .zone:first-child {
+      flex: 0 0 calc(126px * var(--game-card-scale));
+      min-height: 0;
+      margin-bottom: 12px;
+    }
+    body.play-tab-active #tab-play .table > .zone:nth-child(2) {
+      flex: 1 1 auto;
+      min-height: 0;
+      margin-bottom: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    body.play-tab-active #tab-play .zone-title { margin-bottom: 8px; }
+    body.play-tab-active #tab-play .seat-grid {
+      flex: 1 1 auto;
+      min-height: 0;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    body.play-tab-active #tab-play .seat {
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+    }
+    body.play-tab-active #tab-play .seat-head {
+      flex: 0 0 auto;
+      margin-bottom: 8px;
+    }
+    body.play-tab-active #tab-play .hands {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      overflow: hidden;
+    }
+    body.play-tab-active #tab-play .hand {
+      min-height: 0;
+      overflow: hidden;
+      padding: 9px;
+      display: flex;
+      flex-direction: column;
+    }
+    body.play-tab-active #tab-play .hand-head {
+      flex: 0 0 auto;
+      margin-bottom: 6px;
+      gap: 6px;
+    }
+    body.play-tab-active #tab-play .hand .cards {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      overflow: visible;
+      align-content: flex-start;
+    }
+    body.play-tab-active #tab-play .message {
+      flex: 0 0 auto;
+      margin-top: 10px;
+      padding: 9px 12px;
+      line-height: 1.3;
+    }
+    body.play-tab-active #tab-play .advice-column {
+      position: static;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
+    }
+    body.play-tab-active #tab-play .advice-column .panel {
+      min-height: 0;
+      overflow: hidden;
+      padding: 10px;
+    }
+    body.play-tab-active #tab-play .advice-column .advice {
+      min-height: 0;
+      height: 100%;
+      gap: 8px;
+      padding: 12px;
+    }
+    body.play-tab-active #tab-play .advice-column .advice-action {
+      font-size: 24px;
+      min-width: 122px;
+    }
+    body.play-tab-active #tab-play .advice-column .advice-reason {
+      min-height: 0;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    body.play-tab-active #tab-play .side {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
+    }
+    body.play-tab-active #tab-play .side .panel {
+      min-height: 0;
+      overflow: hidden;
+      padding: 10px;
+    }
+    body.play-tab-active #tab-play .side .stats { gap: 7px; }
+    body.play-tab-active #tab-play .side .stat { padding: 8px; }
+    body.play-tab-active #tab-play .side .stat .value { font-size: 20px; }
+    body.play-tab-active #tab-play .side .panel > p.muted { display: none !important; }
+    body.play-help-visible #tab-play .side .panel > p.muted { display: block !important; }
+    .play-help-note { display: none; color: var(--muted); line-height: 1.4; font-size: 12px; font-weight: 650; margin: 0; }
+    body.play-help-visible #tab-play .play-help-note { display: block; }
+    body.play-help-visible .help-open-btn {
+      background: var(--accent);
+      color: #1d1a08;
+      border-color: rgba(0,0,0,.14);
+    }
+    body.play-help-visible #tab-play .advice-column .advice { gap: 6px; }
+
+    /* Restore explanations on every non-play training page. */
+    body:not(.play-tab-active) #tab-counter .rules,
+    body:not(.play-tab-active) #tab-counter h3,
+    body:not(.play-tab-active) #tab-deviations .panel > p.muted,
+    body:not(.play-tab-active) #tab-drills .panel p.muted:not(.drill-feedback),
+    #tab-counter:not(.active) .rules,
+    #tab-counter:not(.active) h3,
+    #tab-deviations:not(.active) .panel > p.muted,
+    #tab-drills:not(.active) .panel p.muted:not(.drill-feedback) {
+      display: revert !important;
+    }
+    #tab-counter.active .rules,
+    #tab-counter.active h3,
+    #tab-deviations.active .panel > p.muted,
+    #tab-drills.active .panel p.muted:not(.drill-feedback) {
+      display: revert !important;
+    }
+
+    @media (max-width: 1100px) {
+      body.play-tab-active { overflow: auto; }
+      body.play-tab-active main.app,
+      body.play-tab-active #tab-play.active,
+      body.play-tab-active #tab-play .play-grid,
+      body.play-tab-active #tab-play .game,
+      body.play-tab-active #tab-play .advice-column,
+      body.play-tab-active #tab-play .side {
+        height: auto;
+        overflow: visible;
+      }
+      body.play-tab-active #tab-play .play-grid { grid-template-columns: 1fr; }
+      body.play-tab-active #tab-play .play-layout { grid-template-columns: 1fr; }
+      body.play-tab-active #tab-play .action-rail,
+      body.play-tab-active #tab-play .table,
+      body.play-tab-active #tab-play .seat {
+        height: auto;
+        overflow: visible;
+      }
+    }
+
+
+    /* Final main-page sizing pass: keep the chosen template, make the dashboard fit better, and allow page scroll as a fallback. */
+    @media (min-width: 1101px) {
+      body.play-tab-active {
+        overflow: auto !important;
+      }
+      .tabs {
+        max-width: 1760px;
+        padding: 8px 14px 6px;
+        gap: 7px;
+      }
+      .tab-btn,
+      .settings-open-btn {
+        min-height: 38px;
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      .help-open-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 18px;
+      }
+      body.play-tab-active main.app {
+        width: min(100%, 1760px);
+        max-width: 1760px;
+        height: calc(100svh - 60px);
+        min-height: 760px;
+        overflow: visible !important;
+        padding: 6px 14px 16px;
+      }
+      body.play-tab-active #tab-play.active,
+      body.play-tab-active #tab-play .play-grid {
+        height: 100%;
+        min-height: 0;
+      }
+      body.play-tab-active #tab-play .play-grid {
+        grid-template-columns: minmax(760px, 1fr) clamp(220px, 16vw, 285px) clamp(160px, 12vw, 205px);
+        gap: 12px;
+        align-items: stretch;
+      }
+      body.play-tab-active #tab-play .game,
+      body.play-tab-active #tab-play .advice-column,
+      body.play-tab-active #tab-play .side,
+      body.play-tab-active #tab-play .advice-column .panel,
+      body.play-tab-active #tab-play .side .panel,
+      body.play-tab-active #tab-play .table,
+      body.play-tab-active #tab-play .seat,
+      body.play-tab-active #tab-play .action-rail {
+        overflow: visible !important;
+      }
+      body.play-tab-active #tab-play .game {
+        padding: 12px;
+      }
+      body.play-tab-active #tab-play .play-layout {
+        grid-template-columns: 142px minmax(0, 1fr);
+        gap: 12px;
+      }
+      body.play-tab-active #tab-play .action-rail {
+        padding: 10px;
+        gap: 7px;
+      }
+      body.play-tab-active #tab-play .action-rail button {
+        min-height: 36px;
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+      body.play-tab-active #tab-play .action-label {
+        font-size: 11px;
+        margin-top: 1px;
+      }
+      body.play-tab-active #tab-play .action-label:not(:first-child) {
+        margin-top: 5px;
+        padding-top: 7px;
+      }
+      body.play-tab-active #tab-play .deck-status,
+      body.play-tab-active #tab-play .active-action-note,
+      body.play-tab-active #tab-play .play-help-note {
+        font-size: 11px;
+        line-height: 1.25;
+      }
+      body.play-tab-active #tab-play .active-action-note {
+        padding: 7px;
+      }
+      body.play-tab-active #tab-play .table {
+        padding: 12px 14px;
+        border-radius: 22px;
+      }
+      body.play-tab-active #tab-play .table > .zone:first-child {
+        flex-basis: calc(116px * var(--game-card-scale));
+        margin-bottom: 8px;
+      }
+      body.play-tab-active #tab-play .zone-title {
+        margin-bottom: 6px;
+      }
+      body.play-tab-active #tab-play .zone-title h2 {
+        font-size: 16px;
+      }
+      body.play-tab-active #tab-play .total-badge,
+      body.play-tab-active #tab-play .total {
+        font-size: 12px;
+      }
+      body.play-tab-active #tab-play .table .cards {
+        min-height: calc(92px * var(--game-card-scale));
+      }
+      body.play-tab-active #tab-play .seat-grid {
+        gap: 10px;
+      }
+      body.play-tab-active #tab-play .seat {
+        padding: 10px;
+      }
+      body.play-tab-active #tab-play .seat-head {
+        margin-bottom: 6px;
+        gap: 5px;
+      }
+      body.play-tab-active #tab-play .seat-controls {
+        gap: 5px;
+      }
+      body.play-tab-active #tab-play .seat-controls select {
+        max-width: 88px;
+        padding: 7px 8px;
+        min-height: 34px;
+      }
+      body.play-tab-active #tab-play .seat-controls input {
+        width: 66px;
+        min-height: 34px;
+        padding: 7px 8px;
+      }
+      body.play-tab-active #tab-play .hands {
+        gap: 7px;
+        grid-template-rows: repeat(2, minmax(0, 1fr));
+      }
+      body.play-tab-active #tab-play .hand {
+        padding: 7px;
+      }
+      body.play-tab-active #tab-play .hand-head {
+        margin-bottom: 5px;
+        font-size: 12px;
+        line-height: 1.2;
+      }
+      body.play-tab-active #tab-play .message {
+        margin-top: 8px;
+        padding: 8px 10px;
+        font-size: 12px;
+        line-height: 1.25;
+      }
+      body.play-tab-active #tab-play .advice-column {
+        gap: 8px;
+      }
+      body.play-tab-active #tab-play .advice-column .panel {
+        padding: 8px;
+      }
+      body.play-tab-active #tab-play .advice-column .advice {
+        padding: 10px;
+        gap: 6px;
+      }
+      body.play-tab-active #tab-play .advice-kicker {
+        font-size: 11px;
+      }
+      body.play-tab-active #tab-play .advice-column .advice-action {
+        font-size: 22px;
+        min-width: 110px;
+        padding: 8px 10px;
+      }
+      body.play-tab-active #tab-play .advice-column .advice-reason {
+        font-size: 12px;
+        line-height: 1.32;
+        padding: 8px;
+      }
+      body.play-tab-active #tab-play .side {
+        gap: 8px;
+      }
+      body.play-tab-active #tab-play .side .panel {
+        padding: 8px;
+      }
+      body.play-tab-active #tab-play .side .stats {
+        gap: 6px;
+      }
+      body.play-tab-active #tab-play .side .stat {
+        padding: 7px;
+        border-radius: 12px;
+      }
+      body.play-tab-active #tab-play .side .stat .label {
+        font-size: 10px;
+        line-height: 1.15;
+      }
+      body.play-tab-active #tab-play .side .stat .value {
+        font-size: 18px;
+        line-height: 1.1;
+      }
+      body.play-tab-active #tab-play #resetBankrollBtn {
+        min-height: 32px;
+        padding: 6px 8px;
+        font-size: 11px;
+      }
+    }
+
+    @media (min-width: 1101px) and (max-width: 1380px) {
+      body.play-tab-active #tab-play .play-grid {
+        grid-template-columns: minmax(690px, 1fr) 225px 165px;
+        gap: 10px;
+      }
+      body.play-tab-active #tab-play .play-layout {
+        grid-template-columns: 132px minmax(0, 1fr);
+        gap: 10px;
+      }
+      body.play-tab-active #tab-play .action-rail button {
+        font-size: 12px;
+        padding-inline: 8px;
+      }
+      body.play-tab-active #tab-play .seat-grid {
+        gap: 8px;
+      }
+      body.play-tab-active #tab-play .seat {
+        padding: 8px;
+      }
+      body.play-tab-active #tab-play .advice-column .advice-action {
+        font-size: 20px;
+        min-width: 96px;
+      }
+      body.play-tab-active #tab-play .side .stat .value {
+        font-size: 17px;
+      }
+    }
+
+    @media (min-width: 1101px) and (max-height: 820px) {
+      body.play-tab-active main.app {
+        min-height: 710px;
+      }
+      body.play-tab-active #tab-play .table > .zone:first-child {
+        flex-basis: calc(108px * var(--game-card-scale));
+      }
+      body.play-tab-active #tab-play .table {
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+      body.play-tab-active #tab-play .action-rail button {
+        min-height: 34px;
+      }
+      body.play-tab-active #tab-play .message {
+        margin-top: 6px;
+        padding-block: 7px;
+      }
+      body.play-tab-active #tab-play .side .stat {
+        padding: 6px;
+      }
+    }
+
+    @media (min-width: 1101px) and (max-height: 740px) {
+      body.play-tab-active main.app {
+        min-height: 690px;
+      }
+    }
+
+
+
+    /* Center dealer total above dealer cards only */
+    body.play-tab-active #tab-play .table > .zone:first-child .zone-title {
+      justify-content: center;
+      text-align: center;
+      width: 100%;
+    }
+    body.play-tab-active #tab-play .table > .zone:first-child .zone-title h2 {
+      display: none !important;
+    }
+    body.play-tab-active #tab-play #dealerTotal {
+      margin-inline: auto;
+    }
+  </style>
+</head>
+<body>
+<nav class="tabs" aria-label="Trainer pages">
+  <button class="tab-btn active" data-tab="play">Play Table</button>
+  <button class="tab-btn" data-tab="counter">Count Trainer</button>
+  <button class="tab-btn" data-tab="deviations">Deviation Trainer</button>
+  <button class="tab-btn" data-tab="drills">Drills</button>
+  <button class="tab-btn" data-tab="strategy">Strategy Tables</button>
+  <button class="settings-open-btn" id="settingsOpenBtn" type="button">⚙ Settings</button>
+  <button class="help-open-btn" id="helpOpenBtn" type="button" aria-label="Open trainer help">?</button>
+</nav>
+
+<div class="settings-modal" id="settingsModal" aria-hidden="true">
+  <div class="settings-backdrop" id="settingsBackdrop"></div>
+  <div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="settings-head">
+      <div>
+        <h2 id="settingsTitle">Trainer settings</h2>
+        <p>Global controls for the table, count visibility, advice, and card size.</p>
+      </div>
+      <button class="settings-close-btn" id="settingsCloseBtn" type="button" aria-label="Close settings">×</button>
+    </div>
+    <div class="controls settings-controls">
+      <label class="toggle">Decks
+        <select id="decksSelect">
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="4">4</option>
+          <option value="6">6</option>
+          <option value="8">8</option>
+        </select>
+      </label>
+      <label class="toggle">Animation
+        <select id="speedSelect">
+          <option value="0">Instant</option>
+          <option value="150" selected>Fast</option>
+          <option value="420">Normal</option>
+          <option value="850">Slow</option>
+        </select>
+      </label>
+      <label class="toggle card-scale-control">Card size
+        <input type="range" id="cardScaleRange" min="0.95" max="1.35" step="0.05" value="1.15" />
+        <span id="cardScaleValue">115%</span>
+      </label>
+      <label class="toggle"><input type="checkbox" id="showCountToggle"> Show count</label>
+      <label class="toggle"><input type="checkbox" id="showCountingDotsToggle"> Beginner count colors</label>
+      <label class="toggle"><input type="checkbox" id="showAdviceToggle" checked> Show advice</label>
+      <label class="toggle"><input type="checkbox" id="useCountAdviceToggle" checked> Count-adjusted advice</label>
+    </div>
+  </div>
+</div>
+
+<div class="settings-modal help-modal" id="helpModal" aria-hidden="true">
+  <div class="settings-backdrop" id="helpBackdrop"></div>
+  <div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="settings-head">
+      <div>
+        <h2 id="helpTitle">Trainer help</h2>
+        <p>Short reference for the hidden explanations.</p>
+      </div>
+      <button class="settings-close-btn" id="helpCloseBtn" type="button" aria-label="Close help">×</button>
+    </div>
+    <div class="help-body">
+      <div class="help-card"><strong>Table play</strong>Choose which spots are You, Bot, or Empty. Only your spots affect the bankroll. Bot spots use basic strategy only and are mainly there to expose more realistic table cards.</div>
+      <div class="help-card"><strong>Counting</strong>Hi-Lo count: 2–6 = +1, 7–9 = 0, 10–A = −1. The dealer hole card is counted only after it is revealed. Hover the count boxes to peek at the hidden count.</div>
+      <div class="help-card"><strong>Advice</strong>Basic strategy is the by-the-book move for the current hand. Count-adjusted advice applies the built-in Hi-Lo deviation rules when the true count changes the decision.</div>
+      <div class="help-card"><strong>Deviation trainer</strong>The deviation table shows the index rules used by the app. For casino precision, indexes should be matched to the exact rules: deck count, S17/H17, surrender, double after split, penetration, and true-count rounding.</div>
+      <div class="help-card"><strong>Drills</strong>The count drill uses a separate deck. Draw a card, update the running count in your head, enter it, and check. The strategy drill gives random dealer/player hands and checks the correct basic-strategy action.</div>
+      <div class="help-card"><strong>Strategy table legend</strong><ul><li>H = Hit</li><li>S = Stand</li><li>D = Double if allowed; otherwise use the app fallback</li><li>P = Split</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<main class="app">
+  <section id="tab-play" class="tab-page active">
+    <div class="play-grid">
+      <div class="game">
+        <div class="play-layout">
+          <div class="action-rail" aria-label="Blackjack actions">
+            <div class="action-label">Shoe</div>
+            <button id="newShoeBtn">Shuffle new shoe</button>
+            <span class="deck-status" id="shoeStatus">Shoe ready</span>
+            <div class="action-label">Round</div>
+            <button class="new-round" id="newRoundBtn">New round</button>
+            <div class="action-label">Hand actions</div>
+            <button id="hitBtn">Hit</button>
+            <button id="standBtn">Stand</button>
+            <button id="doubleBtn">Double down</button>
+            <button id="splitBtn">Split</button>
+            <div class="action-label">Trainer assist</div>
+            <button id="playBasicBtn">Play this hand by book</button>
+            <div class="active-action-note" id="activeActionNote">Choose active spots, then start a round.</div>
+            <p class="play-help-note">Set each spot to You, Bot, or Empty. Bots follow basic strategy only. Use Shuffle new shoe only when you want to restart the deck and reset the count.</p>
+          </div>
+
+          <div class="table">
+            <div class="zone">
+              <div class="zone-title">
+                <h2>Dealer</h2>
+                <span class="total total-badge" id="dealerTotal">Total: -</span>
+              </div>
+              <div class="cards" id="dealerCards"></div>
+            </div>
+
+            <div class="zone">
+              <div class="zone-title">
+                <h2>Table spots</h2>
+                <span class="total" id="roundScore">Your hands: Wins 0 · Losses 0 · Pushes 0</span>
+              </div>
+              <div class="seat-grid" id="seatGrid"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="message" id="message">Choose which spots you want to play, then press “New round”.</div>
+      </div>
+
+      <aside class="advice-column" id="adviceColumn" aria-label="Strategy advice">
+        <div class="panel strategy-panel" id="basicAdvicePanel">
+          <h2 style="margin:0 0 12px;font-size:18px;">Basic strategy advice</h2>
+          <p class="play-help-note">Basic strategy is the standard move for the active hand before count deviations.</p>
+          <div class="advice" id="adviceBox" data-move="-">
+            <div class="advice-kicker">By-the-book move for the active hand</div>
+            <div class="advice-action" id="adviceAction">-</div>
+            <div class="advice-reason" id="adviceReason">Start a round to see the correct move and why.</div>
+          </div>
+        </div>
+
+        <div class="panel strategy-panel" id="countAdvicePanel">
+          <h2 style="margin:0 0 12px;font-size:18px;">Game count strategy advice</h2>
+          <p class="play-help-note">Count-adjusted advice uses the current true count and only changes the move when a built-in deviation applies.</p>
+          <div class="advice" id="countAdviceBox" data-move="-">
+            <div class="advice-kicker">Count-adjusted move for the active hand</div>
+            <div class="advice-action" id="countAdviceAction">-</div>
+            <div class="advice-reason" id="countAdviceReason">Start a round to see the Hi-Lo count-based move.</div>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="side">
+        <div class="panel">
+          <h2 style="margin:0 0 10px;font-size:18px;">Money tracker</h2>
+          <div class="stats">
+            <div class="stat"><div class="label">Bankroll</div><div class="value" id="bankrollValue">€1000</div></div>
+            <div class="stat"><div class="label">Total profit</div><div class="value" id="profitValue">€0</div></div>
+            <div class="stat"><div class="label">Round profit</div><div class="value" id="roundProfitValue">€0</div></div>
+            <div class="stat"><div class="label">Your active spots</div><div class="value" id="activeUserSpots">1</div></div>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="small" id="resetBankrollBtn">Reset bankroll</button>
+          </div>
+          <p class="muted" style="line-height:1.45;margin-bottom:0;">Only your spots affect the bankroll. Bot spots are for realistic table flow and card exposure.</p>
+        </div>
+
+        <div class="panel">
+          <h2 style="margin:0 0 10px;font-size:18px;">Game count</h2>
+          <div class="stats">
+            <div class="stat count-stat" id="runningCountStat" data-hover="Running count: 0"><div class="label">Running</div><div class="value" id="runningCount">Hidden</div></div>
+            <div class="stat count-stat" id="trueCountStat" data-hover="True count: 0.0"><div class="label">True</div><div class="value" id="trueCount">Hidden</div></div>
+            <div class="stat"><div class="label">Cards left</div><div class="value" id="cardsLeft">52</div></div>
+            <div class="stat"><div class="label">Decks left</div><div class="value" id="decksLeft">1.0</div></div>
+          </div>
+          <p class="muted" style="line-height:1.45;margin-bottom:0;">Hi-Lo: 2–6 = +1, 7–9 = 0, 10–A = −1. The dealer hole card is counted only after it is revealed.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="tab-counter" class="tab-page">
+    <div class="learning-grid">
+      <div class="panel">
+        <div class="wide-grid">
+          <div class="stat"><div class="label">Running count</div><div class="value" id="counterRunning">0</div></div>
+          <div class="stat"><div class="label">True count</div><div class="value" id="counterTrue">0.0</div></div>
+          <div class="stat"><div class="label">Seen cards</div><div class="value" id="counterSeen">0</div></div>
+        </div>
+        <h3>Visible cards counted from the game shoe</h3>
+        <div class="seen-list" id="seenCardsList"></div>
+      </div>
+      <div class="panel">
+        <ul class="rules">
+          <li>Keep the running count without looking at the display.</li>
+          <li>Estimate decks remaining and convert to a true count.</li>
+          <li>Notice how bot players expose more cards and make the table feel more realistic.</li>
+          <li>Use the play table with count hidden, then check this page afterwards.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-deviations" class="tab-page">
+    <div class="learning-grid">
+      <div class="panel strategy-panel">
+        <div class="advice" id="deviationNowBox" data-move="-" style="margin-bottom:14px;">
+          <div class="advice-kicker">Current active hand</div>
+          <div class="advice-action" id="deviationNowAction">-</div>
+          <div class="advice-reason" id="deviationNowReason">Start a round and select a player hand to see whether an index deviation applies.</div>
+        </div>
+        <div class="strategy-table-wrap">
+          <table class="basic-table" id="deviationTable">
+            <thead><tr><th>Situation</th><th>Index</th><th>Deviation</th><th>Basic move</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <p class="muted" style="line-height:1.55;">The bot players always use basic strategy only. They do not use count deviations. This keeps their behaviour predictable and lets you focus on your own decisions.</p>
+        <p class="muted" style="line-height:1.55;">For real casino precision, index numbers should be matched to the exact rule set: number of decks, S17/H17, surrender, double after split, penetration, and rounding method.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-drills" class="tab-page">
+    <div class="learning-grid">
+      <div class="panel">
+        <div class="drill-grid">
+          <div>
+            <p class="muted" style="margin-top:0;line-height:1.45;">Draw cards from a separate shuffled deck and enter the current running count. This drill is independent from the blackjack table.</p>
+            <div class="drill-card-wrap">
+              <button id="drillDrawBtn" class="primary">Draw drill card</button>
+              <div id="drillCard"></div>
+            </div>
+          </div>
+          <div>
+            <label class="toggle" style="margin-bottom:10px;">Your running count
+              <input type="number" id="drillGuess" value="0" />
+            </label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button id="drillCheckBtn">Check</button>
+              <button id="drillResetBtn">Reset drill deck</button>
+            </div>
+            <p class="drill-feedback" id="drillFeedback"></p>
+            <span class="pill" id="drillLeft">52 drill cards left</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel strategy-panel">
+        <div class="zone-title">
+          <strong>Dealer</strong><span class="total-badge" id="strategyDrillDealerTotal">-</span>
+        </div>
+        <div class="cards" id="strategyDrillDealer"></div>
+        <div class="zone-title" style="margin-top:12px;">
+          <strong>Player</strong><span class="total-badge" id="strategyDrillPlayerTotal">-</span>
+        </div>
+        <div class="cards" id="strategyDrillPlayer"></div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+          <button id="strategyNewBtn" class="primary">New hand</button>
+          <button class="strategy-answer" data-answer="Hit">Hit</button>
+          <button class="strategy-answer" data-answer="Stand">Stand</button>
+          <button class="strategy-answer" data-answer="Double down">Double</button>
+          <button class="strategy-answer" data-answer="Split">Split</button>
+        </div>
+        <p class="drill-feedback" id="strategyDrillFeedback">Press “New hand”.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-strategy" class="tab-page">
+    <div class="panel strategy-table-panel">
+      <div class="legend-row">
+        <span class="pill action-hit">H = Hit</span>
+        <span class="pill action-stand">S = Stand</span>
+        <span class="pill action-double">D = Double if allowed, otherwise use the app fallback</span>
+        <span class="pill action-split">P = Split</span>
+      </div>
+      <div id="strategyTablesRoot"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const suits = ["♠", "♥", "♦", "♣"];
+  const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  const el = (id) => document.getElementById(id);
+
+  const dealerCardsEl = el("dealerCards");
+  const seatGridEl = el("seatGrid");
+  const messageEl = el("message");
+  const dealerTotalEl = el("dealerTotal");
+  const roundScoreEl = el("roundScore");
+  const adviceBox = el("adviceBox");
+  const adviceActionEl = el("adviceAction");
+  const adviceReasonEl = el("adviceReason");
+  const countAdviceBox = el("countAdviceBox");
+  const adviceColumn = el("adviceColumn");
+  const basicAdvicePanel = el("basicAdvicePanel");
+  const countAdvicePanel = el("countAdvicePanel");
+  const countAdviceActionEl = el("countAdviceAction");
+  const countAdviceReasonEl = el("countAdviceReason");
+  const shoeStatusEl = el("shoeStatus");
+  const activeActionNoteEl = el("activeActionNote");
+
+  const hitBtn = el("hitBtn");
+  const standBtn = el("standBtn");
+  const doubleBtn = el("doubleBtn");
+  const splitBtn = el("splitBtn");
+  const playBasicBtn = el("playBasicBtn");
+  const newRoundBtn = el("newRoundBtn");
+  const newShoeBtn = el("newShoeBtn");
+  const decksSelect = el("decksSelect");
+  const speedSelect = el("speedSelect");
+  const showCountToggle = el("showCountToggle");
+  const showCountingDotsToggle = el("showCountingDotsToggle");
+  const showAdviceToggle = el("showAdviceToggle");
+  const useCountAdviceToggle = el("useCountAdviceToggle");
+  const settingsModal = el("settingsModal");
+  const settingsOpenBtn = el("settingsOpenBtn");
+  const settingsCloseBtn = el("settingsCloseBtn");
+  const settingsBackdrop = el("settingsBackdrop");
+  const helpModal = el("helpModal");
+  const helpOpenBtn = el("helpOpenBtn");
+  const helpCloseBtn = el("helpCloseBtn");
+  const helpBackdrop = el("helpBackdrop");
+  const cardScaleRange = el("cardScaleRange");
+  const cardScaleValue = el("cardScaleValue");
+
+  let shoe = [];
+  let runningCount = 0;
+  let seenCards = [];
+  let dealerHand = [];
+  let activeSeatIndex = 0;
+  let activeHandIndex = 0;
+  let inRound = false;
+  let dealerHoleRevealed = false;
+  let isProcessing = false;
+  let shoeShuffleNumber = 0;
+  let lastShuffleText = "Shoe ready";
+  let bankroll = 1000;
+  let startingBankroll = 1000;
+  let roundProfit = 0;
+  let score = { wins: 0, losses: 0, pushes: 0, blackjacks: 0 };
+
+  let seats = [
+    { name: "Spot 1", mode: "You", baseBet: 10, hands: [] },
+    { name: "Spot 2", mode: "Empty", baseBet: 10, hands: [] },
+    { name: "Spot 3", mode: "Empty", baseBet: 10, hands: [] }
+  ];
+
+  let drillShoe = [];
+  let drillCount = 0;
+  let lastDrillCard = null;
+  let strategyDrillState = null;
+  const renderedCards = new Map();
+
+  const deviationRows = [
+    ["Insurance", "TC ≥ +3", "Take insurance", "No insurance"],
+    ["Hard 16 vs dealer 10", "TC ≥ 0", "Stand", "Hit"],
+    ["Hard 15 vs dealer 10", "TC ≥ +4", "Stand", "Hit"],
+    ["Hard 10 vs dealer 10", "TC ≥ +4", "Double", "Hit"],
+    ["Hard 10 vs dealer Ace", "TC ≥ +4", "Double", "Hit"],
+    ["Hard 11 vs dealer Ace", "TC ≥ +1", "Double", "Hit"],
+    ["Hard 9 vs dealer 2", "TC ≥ +1", "Double", "Hit"],
+    ["Hard 9 vs dealer 7", "TC ≥ +3", "Double", "Hit"],
+    ["Hard 12 vs dealer 2", "TC ≥ +3", "Stand", "Hit"],
+    ["Hard 12 vs dealer 3", "TC ≥ +2", "Stand", "Hit"],
+    ["Hard 12 vs dealer 4", "TC < 0", "Hit", "Stand"],
+    ["Hard 12 vs dealer 5", "TC ≤ −2", "Hit", "Stand"],
+    ["Hard 12 vs dealer 6", "TC ≤ −1", "Hit", "Stand"],
+    ["Hard 13 vs dealer 2", "TC ≤ −1", "Hit", "Stand"],
+    ["Hard 13 vs dealer 3", "TC ≤ −2", "Hit", "Stand"],
+    ["Hard 16 vs dealer 9", "TC ≥ +5", "Stand", "Hit"],
+    ["Soft 19 vs dealer 5", "TC ≥ +1", "Double", "Stand"],
+    ["Soft 19 vs dealer 4", "TC ≥ +3", "Double", "Stand"],
+    ["Pair 10s vs dealer 6", "TC ≥ +4", "Split", "Stand"],
+    ["Pair 10s vs dealer 5", "TC ≥ +5", "Split", "Stand"]
+  ];
+
+  function createShoe(deckCount = 1) {
+    const cards = [];
+    for (let d = 0; d < deckCount; d++) {
+      for (const suit of suits) {
+        for (const rank of ranks) cards.push({ rank, suit, hidden: false, counted: false, uid: cryptoRandom() });
+      }
+    }
+    return shuffle(cards);
+  }
+
+  function cryptoRandom() {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+
+  function shuffle(cards) {
+    const a = [...cards];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function sleep(ms = Number(speedSelect.value)) {
+    const n = Number(ms);
+    if (!n) return Promise.resolve();
+    return new Promise(resolve => setTimeout(resolve, n));
+  }
+
+  function cardNumericValue(card) {
+    if (card.rank === "A") return 11;
+    if (["J", "Q", "K"].includes(card.rank)) return 10;
+    return Number(card.rank);
+  }
+
+  function hiLoValue(card) {
+    const v = card.rank === "A" ? 11 : (["J", "Q", "K"].includes(card.rank) ? 10 : Number(card.rank));
+    if (v >= 2 && v <= 6) return 1;
+    if (v >= 10 || card.rank === "A") return -1;
+    return 0;
+  }
+
+  function countHelpClass(card) {
+    const value = hiLoValue(card);
+    if (value > 0) return "plus";
+    if (value < 0) return "minus";
+    return "zero";
+  }
+
+  function countVisibleCard(card) {
+    if (!card.counted && !card.hidden) {
+      runningCount += hiLoValue(card);
+      card.counted = true;
+      seenCards.push({ rank: card.rank, suit: card.suit, value: hiLoValue(card) });
+    }
+  }
+
+  function drawFromGameShoe(hidden = false) {
+    if (shoe.length === 0) {
+      const deckCount = Number(decksSelect.value);
+      shoe = createShoe(deckCount);
+      runningCount = 0;
+      seenCards = [];
+      shoeShuffleNumber += 1;
+      lastShuffleText = "Auto-shuffled: shoe empty";
+      messageEl.textContent = "Shoe was empty, so a new shoe was shuffled and the running count reset.";
+    }
+    const card = shoe.pop();
+    card.hidden = hidden;
+    card.counted = false;
+    if (!hidden) countVisibleCard(card);
+    return card;
+  }
+
+  function revealCard(card) {
+    card.hidden = false;
+    countVisibleCard(card);
+  }
+
+  function resetGameShoe(reason = "manual") {
+    const deckCount = Number(decksSelect.value);
+    shoe = createShoe(deckCount);
+    runningCount = 0;
+    seenCards = [];
+    inRound = false;
+    dealerHand = [];
+    for (const seat of seats) seat.hands = [];
+    activeSeatIndex = 0;
+    activeHandIndex = 0;
+    dealerHoleRevealed = false;
+    renderedCards.clear();
+    shoeShuffleNumber += 1;
+    lastShuffleText = reason === "automatic" ? "Auto-shuffled before round" : reason === "deck-change" ? "Shuffled after deck setting change" : "Manual shuffle";
+    messageEl.textContent = `New ${deckCount}-deck shoe shuffled. Running count reset to 0.`;
+    updateUI();
+  }
+
+  function handInfo(cards, includeHidden = false) {
+    let total = 0;
+    let aces = 0;
+    for (const card of cards) {
+      if (card.hidden && !includeHidden) continue;
+      if (card.rank === "A") aces++;
+      total += cardNumericValue(card);
+    }
+    let softAces = aces;
+    while (total > 21 && softAces > 0) {
+      total -= 10;
+      softAces--;
+    }
+    return { total, isSoft: softAces > 0, aces };
+  }
+
+  function fullHandInfo(cards) { return handInfo(cards, true); }
+
+  function isNaturalBlackjack(hand) {
+    return hand.cards.length === 2 && !hand.fromSplit && fullHandInfo(hand.cards).total === 21;
+  }
+
+  function strategyDealerValue(card) {
+    if (!card || card.hidden) return null;
+    if (card.rank === "A") return 11;
+    if (["J", "Q", "K"].includes(card.rank)) return 10;
+    return Number(card.rank);
+  }
+
+  function strategyRank(card) {
+    if (card.rank === "A") return "A";
+    if (["10", "J", "Q", "K"].includes(card.rank)) return "10";
+    return card.rank;
+  }
+
+  function getActiveSeats() { return seats.filter(s => s.mode !== "Empty"); }
+  function isUserSeat(seat) { return seat.mode === "You"; }
+
+  function canSplitHand(hand, seat = null) {
+    if (!inRound || !hand || hand.done || hand.cards.length !== 2) return false;
+    const targetSeat = seat || seats[activeSeatIndex];
+    if (targetSeat && targetSeat.hands.length >= 4) return false;
+    return strategyRank(hand.cards[0]) === strategyRank(hand.cards[1]);
+  }
+
+  function canDoubleHand(hand) { return inRound && hand && !hand.done && hand.cards.length === 2; }
+  function effectiveBet(hand) { return hand.bet * (hand.doubled ? 2 : 1); }
+
+  function withSignedEuro(n) {
+    const rounded = Math.round(n * 100) / 100;
+    const abs = Math.abs(rounded).toFixed(rounded % 1 ? 2 : 0);
+    return `${rounded >= 0 ? "+" : "−"}€${abs}`;
+  }
+
+  function euro(n) {
+    const rounded = Math.round(n * 100) / 100;
+    return `€${rounded.toFixed(rounded % 1 ? 2 : 0)}`;
+  }
+
+  function basicStrategy(hand, dealerUpCard, seat = null) {
+    if (!hand || !dealerUpCard) return { action: "-", reason: "Start a round to see the correct move." };
+
+    const dealer = strategyDealerValue(dealerUpCard);
+    const canDouble = canDoubleHand(hand);
+    const canSplit = canSplitHand(hand, seat);
+
+    const withDoubleFallback = (fallbackAction, doubleReason) => {
+      if (canDouble) return { action: "Double down", reason: doubleReason };
+      return { action: fallbackAction, reason: `Double down would be best here, but doubling is only allowed on the first two cards. Fallback: ${fallbackAction.toLowerCase()}. ${doubleReason}` };
+    };
+    const recommendSplit = (reason) => canSplit ? { action: "Split", reason } : null;
+    const dealerText = dealer === 11 ? "Ace" : dealer;
+
+    if (hand.cards.length === 2 && strategyRank(hand.cards[0]) === strategyRank(hand.cards[1])) {
+      const pair = strategyRank(hand.cards[0]);
+      if (pair === "A") return recommendSplit("Always split aces because two hands starting with an ace are much stronger than soft 12.") || basicStrategyAsNonPair(hand, dealerUpCard);
+      if (pair === "10") return { action: "Stand", reason: "Never split 10-value cards in basic strategy. Hard 20 is already one of the strongest made hands." };
+      if (pair === "9") {
+        if ([2,3,4,5,6,8,9].includes(dealer)) return recommendSplit(`Split 9s against dealer ${dealerText}; two 9-starting hands are better than standing on 18 here.`) || basicStrategyAsNonPair(hand, dealerUpCard);
+        return { action: "Stand", reason: `Stand on 18 against dealer ${dealerText}; splitting 9s is weaker against 7, 10, or Ace.` };
+      }
+      if (pair === "8") return recommendSplit("Always split 8s. Hard 16 is weak, and splitting gives two better starting hands.") || basicStrategyAsNonPair(hand, dealerUpCard);
+      if (pair === "7") {
+        if (dealer >= 2 && dealer <= 7) return recommendSplit(`Split 7s against dealer ${dealerText}; dealer is not strong enough to justify keeping hard 14.`) || basicStrategyAsNonPair(hand, dealerUpCard);
+        return { action: "Hit", reason: `Hit hard 14 against dealer ${dealerText}; the dealer is too strong for splitting 7s.` };
+      }
+      if (pair === "6") {
+        if (dealer >= 2 && dealer <= 6) return recommendSplit(`Split 6s against dealer ${dealerText}; dealer has a weak upcard and hard 12 is uncomfortable.`) || basicStrategyAsNonPair(hand, dealerUpCard);
+        return { action: "Hit", reason: `Hit hard 12 against dealer ${dealerText}; splitting 6s is only preferred against 2 through 6.` };
+      }
+      if (pair === "5") {
+        // Play 5,5 as hard 10.
+      } else if (pair === "4") {
+        if ([5,6].includes(dealer)) return recommendSplit(`Split 4s only against dealer ${dealerText} with double-after-split rules; the dealer is weak enough to justify building two hands.`) || basicStrategyAsNonPair(hand, dealerUpCard);
+        return { action: "Hit", reason: "Hit hard 8. Splitting 4s is only preferred against dealer 5 or 6 in this trainer's rule set." };
+      } else if (pair === "3" || pair === "2") {
+        if (dealer >= 2 && dealer <= 7) return recommendSplit(`Split ${pair}s against dealer ${dealerText}; two weak starting hands are better than one low total here.`) || basicStrategyAsNonPair(hand, dealerUpCard);
+        return { action: "Hit", reason: `Hit against dealer ${dealerText}; small pairs are only split against 2 through 7.` };
+      }
+    }
+    return basicStrategyAsNonPair(hand, dealerUpCard);
+
+    function basicStrategyAsNonPair(h, up) {
+      const dealerValue = strategyDealerValue(up);
+      const dText = dealerValue === 11 ? "Ace" : dealerValue;
+      const hInfo = fullHandInfo(h.cards);
+      const t = hInfo.total;
+
+      if (hInfo.isSoft && hInfo.aces > 0 && t <= 21 && h.cards.length >= 2) {
+        if (t >= 20) return { action: "Stand", reason: `Soft ${t} is already strong. Do not risk reducing its value.` };
+        if (t === 19) {
+          if (dealerValue === 6) return withDoubleFallback("Stand", "Soft 19 against dealer 6 is strong, but doubling is profitable because the dealer is weakest on 6.");
+          return { action: "Stand", reason: `Soft 19 is strong enough to stand against dealer ${dText}.` };
+        }
+        if (t === 18) {
+          if (dealerValue >= 3 && dealerValue <= 6) return withDoubleFallback("Stand", `Soft 18 against dealer ${dText}: double if allowed because the dealer is weak; otherwise stand.`);
+          if ([2,7,8].includes(dealerValue)) return { action: "Stand", reason: `Soft 18 is good enough to stand against dealer ${dText}.` };
+          return { action: "Hit", reason: `Soft 18 is not strong enough against dealer ${dText}. Hit because the ace protects you from busting on one card.` };
+        }
+        if (t === 17) {
+          if (dealerValue >= 3 && dealerValue <= 6) return withDoubleFallback("Hit", `Soft 17 against dealer ${dText}: double if allowed because the dealer is weak; otherwise hit.`);
+          return { action: "Hit", reason: `Soft 17 needs improvement against dealer ${dText}.` };
+        }
+        if (t === 15 || t === 16) {
+          if (dealerValue >= 4 && dealerValue <= 6) return withDoubleFallback("Hit", `Soft ${t} doubles against dealer ${dText} because the dealer has a weak upcard.`);
+          return { action: "Hit", reason: `Soft ${t} is too weak to stand; hit and use the ace as protection.` };
+        }
+        if (t === 13 || t === 14) {
+          if (dealerValue >= 5 && dealerValue <= 6) return withDoubleFallback("Hit", `Soft ${t} doubles against dealer ${dText} because the dealer is weak.`);
+          return { action: "Hit", reason: `Soft ${t} is weak. Hit to improve the hand.` };
+        }
+      }
+
+      if (t >= 17) return { action: "Stand", reason: `Hard ${t} is strong enough to stand. Hitting risks busting too often.` };
+      if (t >= 13 && t <= 16) {
+        if (dealerValue >= 2 && dealerValue <= 6) return { action: "Stand", reason: `Hard ${t} stands against dealer ${dText} because the dealer has a bust-prone upcard.` };
+        return { action: "Hit", reason: `Hard ${t} is too weak against dealer ${dText}. Hit to improve.` };
+      }
+      if (t === 12) {
+        if (dealerValue >= 4 && dealerValue <= 6) return { action: "Stand", reason: `Hard 12 stands against dealer ${dText} because the dealer is weak and you bust on many hits.` };
+        return { action: "Hit", reason: `Hard 12 hits against dealer ${dText}; standing is too passive here.` };
+      }
+      if (t === 11) {
+        if (dealerValue !== 11) return withDoubleFallback("Hit", `Hard 11 doubles against dealer ${dText}; many ten-value cards make 21 possible.`);
+        return { action: "Hit", reason: "Hard 11 hits against dealer Ace in this no-surrender, dealer-stands-soft-17 strategy." };
+      }
+      if (t === 10) {
+        if (dealerValue >= 2 && dealerValue <= 9) return withDoubleFallback("Hit", `Hard 10 doubles against dealer ${dText} because a ten-value card gives you 20.`);
+        return { action: "Hit", reason: `Hard 10 hits against dealer ${dText}; the dealer's upcard is too strong for a double.` };
+      }
+      if (t === 9) {
+        if (dealerValue >= 3 && dealerValue <= 6) return withDoubleFallback("Hit", `Hard 9 doubles against dealer ${dText}; dealer is weak and you can improve strongly.`);
+        return { action: "Hit", reason: `Hard 9 is not strong enough to double against dealer ${dText}.` };
+      }
+      return { action: "Hit", reason: `Hard ${t} is too low to stand. Hit.` };
+    }
+  }
+
+  function trueCountRaw() {
+    const decksRemaining = Math.max(shoe.length / 52, 0.25);
+    return runningCount / decksRemaining;
+  }
+  function formatCount(n) { return n > 0 ? `+${n.toFixed(1)}` : n.toFixed(1); }
+
+  function countStrategy(hand, dealerUpCard, seat = null) {
+    if (!hand || !dealerUpCard) return { action: "-", reason: "Start a round to see the Hi-Lo count-based move.", deviated: false };
+    const base = basicStrategy(hand, dealerUpCard, seat);
+    const tc = trueCountRaw();
+    const dealer = strategyDealerValue(dealerUpCard);
+    const dealerText = dealer === 11 ? "Ace" : dealer;
+    const info = fullHandInfo(hand.cards);
+    const total = info.total;
+    const canDouble = canDoubleHand(hand);
+    const canSplit = canSplitHand(hand, seat);
+    const pair = hand.cards.length === 2 && strategyRank(hand.cards[0]) === strategyRank(hand.cards[1]) ? strategyRank(hand.cards[0]) : null;
+    const visibleCountText = showCountToggle.checked ? `Current true count is ${formatCount(tc)}.` : "Current true count is hidden, but the index rule is applied internally.";
+    const deviation = (action, reason) => ({ action, reason: `${reason} ${visibleCountText}`, deviated: true, baseAction: base.action });
+    const noDeviation = () => ({ action: base.action, reason: `No Hi-Lo index deviation is triggered, so count strategy stays with basic strategy: ${base.action}. ${visibleCountText}`, deviated: false, baseAction: base.action });
+
+    if (pair === "10" && canSplit) {
+      if (dealer === 6 && tc >= 4) return deviation("Split", "High-count deviation: split 10s against dealer 6 at true count +4 or higher. This is powerful but very noticeable.");
+      if (dealer === 5 && tc >= 5) return deviation("Split", "High-count deviation: split 10s against dealer 5 at true count +5 or higher. This is powerful but very noticeable.");
+    }
+    if (base.action === "Split") return noDeviation();
+
+    if (info.isSoft && total === 19 && hand.cards.length === 2) {
+      if (dealer === 5 && tc >= 1) return canDouble ? deviation("Double down", "High-count deviation: double soft 19 against dealer 5 at true count +1 or higher.") : deviation("Stand", "Soft 19 would double by count, but doubling is no longer legal. Fallback is stand.");
+      if (dealer === 4 && tc >= 3) return canDouble ? deviation("Double down", "High-count deviation: double soft 19 against dealer 4 at true count +3 or higher.") : deviation("Stand", "Soft 19 would double by count, but doubling is no longer legal. Fallback is stand.");
+    }
+
+    if (!info.isSoft) {
+      if (total === 11 && dealer === 11 && tc >= 1) return canDouble ? deviation("Double down", "High-count deviation: double hard 11 against dealer Ace at true count +1 or higher.") : deviation("Hit", "Hard 11 would double by count, but doubling is no longer legal. Fallback is hit.");
+      if (total === 10 && dealer === 10 && tc >= 4) return canDouble ? deviation("Double down", "High-count deviation: double hard 10 against dealer 10 at true count +4 or higher.") : deviation("Hit", "Hard 10 would double by count, but doubling is no longer legal. Fallback is hit.");
+      if (total === 10 && dealer === 11 && tc >= 4) return canDouble ? deviation("Double down", "High-count deviation: double hard 10 against dealer Ace at true count +4 or higher.") : deviation("Hit", "Hard 10 would double by count, but doubling is no longer legal. Fallback is hit.");
+      if (total === 9 && dealer === 2 && tc >= 1) return canDouble ? deviation("Double down", "High-count deviation: double hard 9 against dealer 2 at true count +1 or higher.") : deviation("Hit", "Hard 9 would double by count, but doubling is no longer legal. Fallback is hit.");
+      if (total === 9 && dealer === 7 && tc >= 3) return canDouble ? deviation("Double down", "High-count deviation: double hard 9 against dealer 7 at true count +3 or higher.") : deviation("Hit", "Hard 9 would double by count, but doubling is no longer legal. Fallback is hit.");
+      if (total === 16 && dealer === 10 && tc >= 0) return deviation("Stand", "High-count deviation: stand on hard 16 against dealer 10 at true count 0 or higher.");
+      if (total === 16 && dealer === 9 && tc >= 5) return deviation("Stand", "High-count deviation: stand on hard 16 against dealer 9 at true count +5 or higher.");
+      if (total === 15 && dealer === 10 && tc >= 4) return deviation("Stand", "High-count deviation: stand on hard 15 against dealer 10 at true count +4 or higher.");
+      if (total === 13 && dealer === 2 && tc <= -1) return deviation("Hit", "Low-count deviation: hit hard 13 against dealer 2 at true count -1 or lower.");
+      if (total === 13 && dealer === 3 && tc <= -2) return deviation("Hit", "Low-count deviation: hit hard 13 against dealer 3 at true count -2 or lower.");
+      if (total === 12 && dealer === 2 && tc >= 3) return deviation("Stand", "High-count deviation: stand on hard 12 against dealer 2 at true count +3 or higher.");
+      if (total === 12 && dealer === 3 && tc >= 2) return deviation("Stand", "High-count deviation: stand on hard 12 against dealer 3 at true count +2 or higher.");
+      if (total === 12 && dealer === 4 && tc < 0) return deviation("Hit", "Low-count deviation: hit hard 12 against dealer 4 when the true count is below 0.");
+      if (total === 12 && dealer === 5 && tc <= -2) return deviation("Hit", "Low-count deviation: hit hard 12 against dealer 5 at true count -2 or lower.");
+      if (total === 12 && dealer === 6 && tc <= -1) return deviation("Hit", "Low-count deviation: hit hard 12 against dealer 6 at true count -1 or lower.");
+    }
+    return noDeviation();
+  }
+
+  function currentRef() {
+    for (let s = activeSeatIndex; s < seats.length; s++) {
+      const startHand = s === activeSeatIndex ? activeHandIndex : 0;
+      for (let h = startHand; h < seats[s].hands.length; h++) {
+        if (!seats[s].hands[h].done) return { seat: seats[s], hand: seats[s].hands[h], seatIndex: s, handIndex: h };
+      }
+    }
+    for (let s = 0; s < activeSeatIndex; s++) {
+      for (let h = 0; h < seats[s].hands.length; h++) {
+        if (!seats[s].hands[h].done) return { seat: seats[s], hand: seats[s].hands[h], seatIndex: s, handIndex: h };
+      }
+    }
+    return null;
+  }
+
+  function setActive(ref) {
+    if (!ref) return;
+    activeSeatIndex = ref.seatIndex;
+    activeHandIndex = ref.handIndex;
+  }
+
+  function activeHumanRef() {
+    const ref = currentRef();
+    return ref && ref.seat.mode === "You" ? ref : null;
+  }
+
+  async function newRound() {
+    if (isProcessing) return;
+    const active = getActiveSeats();
+    if (!active.length) {
+      messageEl.textContent = "Set at least one spot to You or Bot before starting a round.";
+      return;
+    }
+    isProcessing = true;
+    setSeatControlDisabled(true);
+    const autoShuffled = shoe.length < Math.max(20, active.length * 8 + 8);
+    if (autoShuffled) {
+      resetGameShoe("automatic");
+      setSeatControlDisabled(true);
+    }
+    inRound = true;
+    dealerHoleRevealed = false;
+    activeSeatIndex = 0;
+    activeHandIndex = 0;
+    dealerHand = [];
+    roundProfit = 0;
+    for (const seat of seats) {
+      seat.hands = [];
+      if (seat.mode !== "Empty") seat.hands.push({ cards: [], done: false, doubled: false, result: "", payout: 0, bet: Number(seat.baseBet) || 10, fromSplit: false });
+    }
+    messageEl.textContent = autoShuffled ? "New shoe shuffled before this round because the shoe was low. Running count reset to 0. Round started." : "Round started. Cards are being dealt.";
+    updateUI();
+
+    for (const seat of seats) if (seat.mode !== "Empty") { seat.hands[0].cards.push(drawFromGameShoe(false)); updateUI(); await sleep(); }
+    dealerHand.push(drawFromGameShoe(false)); updateUI(); await sleep();
+    for (const seat of seats) if (seat.mode !== "Empty") { seat.hands[0].cards.push(drawFromGameShoe(false)); updateUI(); await sleep(); }
+    dealerHand.push(drawFromGameShoe(true)); updateUI(); await sleep();
+
+    const dealerBJ = fullHandInfo(dealerHand).total === 21;
+    if (dealerBJ) {
+      revealDealerHole();
+      for (const seat of seats) {
+        for (const hand of seat.hands) {
+          if (isNaturalBlackjack(hand)) settleHand(hand, seat, "push", 0, "PUSH");
+          else settleHand(hand, seat, "lose", -hand.bet, "LOSE");
+          hand.done = true;
+        }
+      }
+      inRound = false;
+      messageEl.textContent = "Dealer has blackjack. Round settled.";
+      isProcessing = false;
+      setSeatControlDisabled(false);
+      updateUI();
+      return;
+    }
+
+    for (const seat of seats) {
+      for (const hand of seat.hands) {
+        if (isNaturalBlackjack(hand)) {
+          settleHand(hand, seat, "blackjack", hand.bet * 1.5, "BLACKJACK");
+          hand.done = true;
+        }
+      }
+    }
+
+    isProcessing = false;
+    await processAutoUntilHuman();
+  }
+
+  function settleHand(hand, seat, result, payout, label = null) {
+    if (hand.settled) return;
+    hand.result = label || result;
+    hand.payout = payout;
+    hand.settled = true;
+    if (seat.mode === "You") {
+      bankroll += payout;
+      roundProfit += payout;
+      if (result === "win" || result === "blackjack") score.wins++;
+      else if (result === "lose") score.losses++;
+      else score.pushes++;
+      if (result === "blackjack") score.blackjacks++;
+    }
+  }
+
+  async function processAutoUntilHuman() {
+    if (!inRound || isProcessing) return;
+    isProcessing = true;
+    while (inRound) {
+      const ref = currentRef();
+      if (!ref) {
+        await playDealerAndSettle();
+        break;
+      }
+      setActive(ref);
+      updateUI();
+      if (ref.seat.mode === "You") {
+        messageEl.textContent = `Your turn: ${ref.seat.name}, hand ${ref.handIndex + 1}.`;
+        break;
+      }
+      messageEl.textContent = `${ref.seat.name} bot is playing by basic strategy.`;
+      await sleep();
+      await playBotStep(ref);
+    }
+    isProcessing = false;
+    updateUI();
+  }
+
+  async function playBotStep(ref) {
+    const { seat, hand } = ref;
+    const advice = basicStrategy(hand, dealerHand[0], seat);
+    if (advice.action === "Split" && canSplitHand(hand, seat)) {
+      await splitSpecificHand(ref);
+      return;
+    }
+    if (advice.action === "Double down" && canDoubleHand(hand)) {
+      await doubleSpecificHand(ref);
+      return;
+    }
+    if (advice.action === "Stand") {
+      hand.done = true;
+      messageEl.textContent = `${seat.name} bot stands.`;
+      advanceFrom(ref);
+      updateUI();
+      return;
+    }
+    hand.cards.push(drawFromGameShoe(false));
+    const total = fullHandInfo(hand.cards).total;
+    if (total > 21) {
+      hand.done = true;
+      hand.result = "BUST";
+      messageEl.textContent = `${seat.name} bot busts with ${total}.`;
+      advanceFrom(ref);
+    } else {
+      messageEl.textContent = `${seat.name} bot hits to ${total}.`;
+    }
+    updateUI();
+    await sleep();
+  }
+
+  function advanceFrom(ref) {
+    activeSeatIndex = ref.seatIndex;
+    activeHandIndex = ref.handIndex + 1;
+  }
+
+  async function hit() {
+    const ref = activeHumanRef();
+    if (!ref || isProcessing) return;
+    isProcessing = true;
+    ref.hand.cards.push(drawFromGameShoe(false));
+    const total = fullHandInfo(ref.hand.cards).total;
+    if (total > 21) {
+      ref.hand.done = true;
+      ref.hand.result = "BUST";
+      messageEl.textContent = `Hand busts with ${total}.`;
+      advanceFrom(ref);
+    } else {
+      messageEl.textContent = `You hit. Hand total is ${total}.`;
+    }
+    updateUI();
+    await sleep();
+    isProcessing = false;
+    await processAutoUntilHuman();
+  }
+
+  async function stand() {
+    const ref = activeHumanRef();
+    if (!ref || isProcessing) return;
+    ref.hand.done = true;
+    messageEl.textContent = `You stand on ${fullHandInfo(ref.hand.cards).total}.`;
+    advanceFrom(ref);
+    updateUI();
+    await processAutoUntilHuman();
+  }
+
+  async function doubleDown() {
+    const ref = activeHumanRef();
+    if (!ref || !canDoubleHand(ref.hand) || isProcessing) return;
+    isProcessing = true;
+    await doubleSpecificHand(ref);
+    isProcessing = false;
+    await processAutoUntilHuman();
+  }
+
+  async function doubleSpecificHand(ref) {
+    ref.hand.doubled = true;
+    ref.hand.cards.push(drawFromGameShoe(false));
+    ref.hand.done = true;
+    const total = fullHandInfo(ref.hand.cards).total;
+    if (total > 21) ref.hand.result = "BUST";
+    messageEl.textContent = `${ref.seat.mode === "You" ? "You" : ref.seat.name + " bot"} double down. Final hand total is ${total}.`;
+    advanceFrom(ref);
+    updateUI();
+    await sleep();
+  }
+
+  async function splitHand() {
+    const ref = activeHumanRef();
+    if (!ref || !canSplitHand(ref.hand, ref.seat) || isProcessing) return;
+    isProcessing = true;
+    await splitSpecificHand(ref);
+    isProcessing = false;
+    await processAutoUntilHuman();
+  }
+
+  async function splitSpecificHand(ref) {
+    const hand = ref.hand;
+    const [first, second] = hand.cards;
+    const splitAces = first.rank === "A" && second.rank === "A";
+    const h1 = { cards: [first], done: false, doubled: false, result: "", payout: 0, bet: hand.bet, fromSplit: true };
+    const h2 = { cards: [second], done: false, doubled: false, result: "", payout: 0, bet: hand.bet, fromSplit: true };
+    ref.seat.hands.splice(ref.handIndex, 1, h1, h2);
+    setActive({ seat: ref.seat, hand: h1, seatIndex: ref.seatIndex, handIndex: ref.handIndex });
+    h1.cards.push(drawFromGameShoe(false));
+    updateUI(); await sleep();
+    h2.cards.push(drawFromGameShoe(false));
+    if (splitAces) { h1.done = true; h2.done = true; }
+    messageEl.textContent = splitAces ? `${ref.seat.name} split aces. Each ace receives one card.` : `${ref.seat.name} split the hand.`;
+    updateUI(); await sleep();
+  }
+
+  async function playBasicForHumanHand() {
+    const ref = activeHumanRef();
+    if (!ref || isProcessing) return;
+    const advice = useCountAdviceToggle.checked ? countStrategy(ref.hand, dealerHand[0], ref.seat) : basicStrategy(ref.hand, dealerHand[0], ref.seat);
+    if (advice.action === "Split" && canSplitHand(ref.hand, ref.seat)) return splitHand();
+    if (advice.action === "Double down" && canDoubleHand(ref.hand)) return doubleDown();
+    if (advice.action === "Stand") return stand();
+    return hit();
+  }
+
+  function revealDealerHole() {
+    if (!dealerHoleRevealed && dealerHand[1]) {
+      revealCard(dealerHand[1]);
+      dealerHoleRevealed = true;
+    }
+  }
+
+  async function playDealerAndSettle() {
+    revealDealerHole();
+    updateUI(); await sleep();
+    const handsNeedingDealer = seats.flatMap(s => s.hands.map(h => ({ seat: s, hand: h }))).filter(x => !x.hand.settled && fullHandInfo(x.hand.cards).total <= 21);
+    if (handsNeedingDealer.length) {
+      while (true) {
+        const d = fullHandInfo(dealerHand);
+        if (d.total < 17) {
+          dealerHand.push(drawFromGameShoe(false));
+          messageEl.textContent = `Dealer hits to ${fullHandInfo(dealerHand).total}.`;
+          updateUI(); await sleep();
+          continue;
+        }
+        break;
+      }
+    }
+    const dealerTotal = fullHandInfo(dealerHand).total;
+    for (const seat of seats) {
+      for (const hand of seat.hands) {
+        if (hand.settled) continue;
+        const playerTotal = fullHandInfo(hand.cards).total;
+        const bet = effectiveBet(hand);
+        if (playerTotal > 21) settleHand(hand, seat, "lose", -bet, "LOSE");
+        else if (dealerTotal > 21) settleHand(hand, seat, "win", bet, "WIN");
+        else if (playerTotal > dealerTotal) settleHand(hand, seat, "win", bet, "WIN");
+        else if (playerTotal < dealerTotal) settleHand(hand, seat, "lose", -bet, "LOSE");
+        else settleHand(hand, seat, "push", 0, "PUSH");
+        hand.done = true;
+      }
+    }
+    inRound = false;
+    setSeatControlDisabled(false);
+    messageEl.textContent = dealerTotal > 21 ? `Dealer busts with ${dealerTotal}. Round settled.` : `Dealer stands on ${dealerTotal}. Round settled.`;
+    updateUI();
+  }
+
+  function cardHtml(card) {
+    const red = card.suit === "♥" || card.suit === "♦";
+    const previous = renderedCards.get(card.uid);
+    const isNew = !previous;
+    const wasHidden = previous && previous.hidden;
+    const classes = ["card"];
+    if (red) classes.push("red");
+    if (card.hidden) classes.push("hidden");
+    if (isNew) classes.push("card-new");
+    else if (wasHidden && !card.hidden) classes.push("card-flip");
+    renderedCards.set(card.uid, { hidden: Boolean(card.hidden) });
+    const mainRank = !card.hidden && showCountingDotsToggle.checked ? `<span class="count-help-value ${countHelpClass(card)}">${card.rank}</span>` : card.rank;
+    const label = card.hidden ? "" : `${mainRank}<span class="suit">${card.suit}</span><small>${card.rank}</small>`;
+    return `<div class="${classes.join(" ")}">${label}</div>`;
+  }
+
+  function setSeatControlDisabled(disabled) {
+    document.querySelectorAll(".seat-mode,.seat-bet").forEach(x => x.disabled = disabled);
+  }
+
+  function renderSeats() {
+    seatGridEl.innerHTML = seats.map((seat, sIdx) => {
+      const modeOptions = ["You", "Bot", "Empty"].map(m => `<option value="${m}" ${seat.mode === m ? "selected" : ""}>${m}</option>`).join("");
+      const ref = currentRef();
+      const seatActive = ref && ref.seatIndex === sIdx;
+      const classNames = ["seat"];
+      if (seat.mode === "Empty") classNames.push("empty");
+      if (seatActive && seat.mode === "You") classNames.push("active");
+      if (seatActive && seat.mode === "Bot") classNames.push("bot-active");
+      const handsHtml = seat.hands.length ? seat.hands.map((hand, hIdx) => {
+        const info = fullHandInfo(hand.cards);
+        const handClasses = ["hand"];
+        if (seatActive && ref.handIndex === hIdx && seat.mode === "You") handClasses.push("active");
+        if (seatActive && ref.handIndex === hIdx && seat.mode === "Bot") handClasses.push("bot-active");
+        if (hand.done) handClasses.push("done");
+        const resultClass = hand.result === "LOSE" || hand.result === "BUST" ? "lose" : hand.result === "PUSH" ? "push" : hand.result === "BLACKJACK" ? "blackjack" : hand.result ? "win" : "";
+        const payout = hand.settled && seat.mode === "You" ? `<span class="${hand.payout >= 0 ? "profit-plus" : "profit-minus"}">${withSignedEuro(hand.payout)}</span>` : "";
+        const status = hand.result ? `<span class="result ${resultClass}">${hand.result}</span> ${payout}` : (hand.doubled ? `<span class="pill">Doubled ${euro(effectiveBet(hand))}</span>` : `<span class="pill">Bet ${euro(hand.bet)}</span>`);
+        return `<div class="${handClasses.join(" ")}">
+          <div class="hand-head"><span class="hand-total-badge">Total ${info.total}${info.isSoft ? " soft" : ""}</span><span>${status}</span></div>
+          <div class="cards">${hand.cards.map(cardHtml).join("")}</div>
+        </div>`;
+      }).join("") : `<p class="muted" style="margin:8px 0 0;line-height:1.4;">${seat.mode === "Empty" ? "Empty spot" : "No hand yet"}</p>`;
+
+      return `<div class="${classNames.join(" ")}">
+        <div class="seat-head">
+          <div class="seat-controls">
+            <select class="seat-mode" data-seat="${sIdx}">${modeOptions}</select>
+            <input class="seat-bet" data-seat="${sIdx}" type="number" min="1" step="1" value="${seat.baseBet}">
+          </div>
+        </div>
+        ${handsHtml}
+      </div>`;
+    }).join("");
+
+    document.querySelectorAll(".seat-mode").forEach(sel => sel.addEventListener("change", (e) => {
+      const i = Number(e.target.dataset.seat);
+      seats[i].mode = e.target.value;
+      updateUI();
+    }));
+    document.querySelectorAll(".seat-bet").forEach(input => input.addEventListener("change", (e) => {
+      const i = Number(e.target.dataset.seat);
+      seats[i].baseBet = Math.max(1, Number(e.target.value) || 10);
+      updateUI();
+    }));
+    if (inRound || isProcessing) setSeatControlDisabled(true);
+  }
+
+  function updateUI() {
+    dealerCardsEl.innerHTML = dealerHand.map(cardHtml).join("");
+    const dInfo = handInfo(dealerHand, false);
+    dealerTotalEl.textContent = dealerHand.length ? `Total: ${dealerHand.some(c => c.hidden) ? dInfo.total + "+?" : dInfo.total}${dInfo.isSoft ? " soft" : ""}` : "Total: -";
+    renderSeats();
+
+    roundScoreEl.textContent = `Your hands: Wins ${score.wins} · Losses ${score.losses} · Pushes ${score.pushes}`;
+    const showCount = showCountToggle.checked;
+    el("runningCount").textContent = showCount ? runningCount : "Hidden";
+    el("trueCount").textContent = showCount ? formatCount(trueCountRaw()) : "Hidden";
+    el("runningCountStat").dataset.hover = `Running count: ${runningCount}`;
+    el("trueCountStat").dataset.hover = `True count: ${formatCount(trueCountRaw())}`;
+    el("cardsLeft").textContent = shoe.length;
+    el("decksLeft").textContent = (shoe.length / 52).toFixed(1);
+    el("counterRunning").textContent = runningCount;
+    el("counterTrue").textContent = formatCount(trueCountRaw());
+    el("counterSeen").textContent = seenCards.length;
+    el("cardsLeft").textContent = shoe.length;
+    shoeStatusEl.textContent = `${lastShuffleText} · Shoe #${shoeShuffleNumber} · ${shoe.length} cards left`;
+    shoeStatusEl.classList.toggle("fresh", lastShuffleText.startsWith("Auto-shuffled") || lastShuffleText.startsWith("Manual"));
+
+    el("bankrollValue").textContent = euro(bankroll);
+    el("profitValue").textContent = withSignedEuro(bankroll - startingBankroll);
+    el("profitValue").className = `value ${(bankroll - startingBankroll) >= 0 ? "profit-plus" : "profit-minus"}`;
+    el("roundProfitValue").textContent = withSignedEuro(roundProfit);
+    el("roundProfitValue").className = `value ${roundProfit >= 0 ? "profit-plus" : "profit-minus"}`;
+    el("activeUserSpots").textContent = seats.filter(s => s.mode === "You").length;
+
+    const seenList = seenCards.slice(-80).map(c => {
+      const cls = c.suit === "♥" || c.suit === "♦" ? "seen-card-pill red" : "seen-card-pill";
+      const sign = c.value > 0 ? "+1" : c.value < 0 ? "−1" : "0";
+      return `<span class="${cls}">${c.rank}${c.suit} <small>${sign}</small></span>`;
+    }).join("");
+    el("seenCardsList").innerHTML = seenList || `<span class="muted">No visible game cards counted yet.</span>`;
+
+    const ref = currentRef();
+    const canHumanAct = Boolean(inRound && ref && ref.seat.mode === "You" && !ref.hand.done && !isProcessing);
+    hitBtn.disabled = !canHumanAct;
+    standBtn.disabled = !canHumanAct;
+    doubleBtn.disabled = !canHumanAct || !canDoubleHand(ref && ref.hand);
+    splitBtn.disabled = !canHumanAct || !canSplitHand(ref && ref.hand, ref && ref.seat);
+    playBasicBtn.disabled = !canHumanAct;
+    newRoundBtn.disabled = isProcessing || inRound;
+    newShoeBtn.disabled = isProcessing || inRound;
+    decksSelect.disabled = isProcessing || inRound;
+
+    const showAdvice = showAdviceToggle.checked;
+    adviceColumn.style.display = showAdvice ? "grid" : "none";
+    basicAdvicePanel.style.display = showAdvice ? "block" : "none";
+    countAdvicePanel.style.display = (showAdvice && useCountAdviceToggle.checked) ? "block" : "none";
+    adviceBox.classList.remove("hidden-advice");
+    countAdviceBox.classList.remove("hidden-advice");
+
+    if (inRound && ref && !ref.hand.done) {
+      const basic = basicStrategy(ref.hand, dealerHand[0], ref.seat);
+      const counted = countStrategy(ref.hand, dealerHand[0], ref.seat);
+      adviceBox.dataset.move = basic.action;
+      countAdviceBox.dataset.move = useCountAdviceToggle.checked ? counted.action : "-";
+      adviceActionEl.textContent = basic.action;
+      adviceReasonEl.textContent = basic.reason;
+      countAdviceActionEl.textContent = useCountAdviceToggle.checked ? counted.action : "Off";
+      countAdviceReasonEl.textContent = useCountAdviceToggle.checked ? counted.reason : "Count-adjusted advice is turned off. Basic strategy is being used for the play-by-book button.";
+      el("deviationNowBox").dataset.move = counted.action;
+      el("deviationNowAction").textContent = counted.deviated ? counted.action : "No deviation";
+      el("deviationNowReason").textContent = counted.deviated ? counted.reason : `Stay with basic strategy: ${basic.action}. ${counted.reason}`;
+      activeActionNoteEl.textContent = `${ref.seat.name} · ${ref.seat.mode} · Hand ${ref.handIndex + 1}. ${ref.seat.mode === "Bot" ? "Bot uses basic strategy only." : "You decide this hand."}`;
+    } else {
+      adviceBox.dataset.move = "-";
+      countAdviceBox.dataset.move = "-";
+      adviceActionEl.textContent = "-";
+      adviceReasonEl.textContent = inRound ? "No active hand." : "Start a new round to see the correct move.";
+      countAdviceActionEl.textContent = "-";
+      countAdviceReasonEl.textContent = inRound ? "No active hand." : "Start a new round to see the Hi-Lo count-based move.";
+      el("deviationNowBox").dataset.move = "-";
+      el("deviationNowAction").textContent = "-";
+      el("deviationNowReason").textContent = "Start a round and select a player hand to see whether an index deviation applies.";
+      activeActionNoteEl.textContent = inRound ? "The table is resolving." : "Choose active spots, then start a round.";
+    }
+  }
+
+  function resetBankroll() {
+    bankroll = 1000;
+    startingBankroll = 1000;
+    roundProfit = 0;
+    score = { wins: 0, losses: 0, pushes: 0, blackjacks: 0 };
+    messageEl.textContent = "Bankroll and result counters reset.";
+    updateUI();
+  }
+
+  function resetDrill() {
+    drillShoe = createShoe(1);
+    drillCount = 0;
+    lastDrillCard = null;
+    el("drillCard").innerHTML = "";
+    el("drillGuess").value = 0;
+    el("drillFeedback").textContent = "Drill deck reset. Running count is 0.";
+    el("drillFeedback").className = "drill-feedback";
+    updateDrillLeft();
+  }
+  function updateDrillLeft() { el("drillLeft").textContent = `${drillShoe.length} drill cards left`; }
+  function drawDrillCard() {
+    if (drillShoe.length === 0) resetDrill();
+    lastDrillCard = drillShoe.pop();
+    drillCount += hiLoValue(lastDrillCard);
+    el("drillCard").innerHTML = cardHtml(lastDrillCard);
+    el("drillFeedback").textContent = "Enter the new running count, then press Check.";
+    el("drillFeedback").className = "drill-feedback";
+    updateDrillLeft();
+  }
+  function checkDrill() {
+    if (!lastDrillCard) {
+      el("drillFeedback").textContent = "Draw a card first.";
+      el("drillFeedback").className = "drill-feedback bad";
+      return;
+    }
+    const guess = Number(el("drillGuess").value);
+    if (guess === drillCount) {
+      el("drillFeedback").textContent = `Correct. Running count is ${drillCount}.`;
+      el("drillFeedback").className = "drill-feedback good";
+    } else {
+      const val = hiLoValue(lastDrillCard);
+      const sign = val > 0 ? "+1" : val < 0 ? "−1" : "0";
+      el("drillFeedback").textContent = `Not quite. ${lastDrillCard.rank}${lastDrillCard.suit} counts ${sign}. Correct running count is ${drillCount}.`;
+      el("drillFeedback").className = "drill-feedback bad";
+    }
+  }
+
+  function randomCard(rank = null) {
+    const r = rank || ranks[Math.floor(Math.random() * ranks.length)];
+    const suit = suits[Math.floor(Math.random() * suits.length)];
+    return { rank: r, suit, hidden: false, counted: true, uid: cryptoRandom() };
+  }
+
+  function generateStrategyDrill() {
+    const types = ["hard", "soft", "pair"];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const dealer = randomCard();
+    let player;
+    if (type === "pair") {
+      const pairRanks = ["A","2","3","4","5","6","7","8","9","10"];
+      const r = pairRanks[Math.floor(Math.random() * pairRanks.length)];
+      player = [randomCard(r), randomCard(r)];
+    } else if (type === "soft") {
+      const r = String(2 + Math.floor(Math.random() * 8));
+      player = [randomCard("A"), randomCard(r)];
+    } else {
+      while (true) {
+        player = [randomCard(), randomCard()];
+        const info = fullHandInfo(player);
+        if (!info.isSoft && info.total >= 5 && info.total <= 20 && strategyRank(player[0]) !== strategyRank(player[1])) break;
+      }
+    }
+    strategyDrillState = { dealer, hand: { cards: player, done: false, bet: 10, fromSplit: false, doubled: false } };
+    el("strategyDrillDealer").innerHTML = cardHtml(dealer);
+    el("strategyDrillPlayer").innerHTML = player.map(cardHtml).join("");
+    const pInfo = fullHandInfo(player);
+    el("strategyDrillDealerTotal").textContent = dealer.rank === "A" ? "A" : String(strategyDealerValue(dealer));
+    el("strategyDrillPlayerTotal").textContent = `Total ${pInfo.total}${pInfo.isSoft ? " soft" : ""}`;
+    el("strategyDrillFeedback").textContent = "Choose the correct basic strategy move.";
+    el("strategyDrillFeedback").className = "drill-feedback";
+  }
+
+  function answerStrategyDrill(answer) {
+    if (!strategyDrillState) {
+      el("strategyDrillFeedback").textContent = "Press New hand first.";
+      el("strategyDrillFeedback").className = "drill-feedback bad";
+      return;
+    }
+    const previousInRound = inRound;
+    inRound = true;
+    const advice = basicStrategy(strategyDrillState.hand, strategyDrillState.dealer, { hands: [strategyDrillState.hand] });
+    inRound = previousInRound;
+    const correct = answer === advice.action;
+    el("strategyDrillFeedback").textContent = correct ? `Correct: ${advice.action}. ${advice.reason}` : `Not quite. Correct move: ${advice.action}. ${advice.reason}`;
+    el("strategyDrillFeedback").className = `drill-feedback ${correct ? "good" : "bad"}`;
+  }
+
+  function renderDeviationTable() {
+    el("deviationTable").querySelector("tbody").innerHTML = deviationRows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+    colorizeStrategyTables();
+  }
+
+  function actionClassFromText(text) {
+    const normalized = text.trim().toLowerCase();
+    if (normalized === "h" || normalized === "hit") return "action-hit";
+    if (normalized === "s" || normalized === "stand") return "action-stand";
+    if (normalized === "d" || normalized === "double" || normalized === "double down") return "action-double";
+    if (normalized === "p" || normalized === "split") return "action-split";
+    return "";
+  }
+
+  function colorizeStrategyTables() {
+    document.querySelectorAll(".basic-table tbody td").forEach(td => {
+      td.classList.remove("action-hit", "action-stand", "action-double", "action-split");
+      const cls = actionClassFromText(td.textContent);
+      if (cls) td.classList.add(cls);
+    });
+  }
+
+  function renderStrategyTables() {
+    const root = el("strategyTablesRoot");
+    root.innerHTML = `
+      <h3 class="table-group-title">Hard totals</h3>
+      <div class="strategy-table-wrap"><table class="basic-table" aria-label="Hard total basic strategy">
+        <thead><tr><th>Player hand</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>A</th></tr></thead>
+        <tbody>
+          <tr><td>17+</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td></tr>
+          <tr><td>16</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>15</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>14</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>13</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>12</td><td>H</td><td>H</td><td>S</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>11</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>H</td></tr>
+          <tr><td>10</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>H</td><td>H</td></tr>
+          <tr><td>9</td><td>H</td><td>D</td><td>D</td><td>D</td><td>D</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>8 or less</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+        </tbody>
+      </table></div>
+      <h3 class="table-group-title">Soft totals</h3>
+      <div class="strategy-table-wrap"><table class="basic-table" aria-label="Soft total basic strategy">
+        <thead><tr><th>Player hand</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>A</th></tr></thead>
+        <tbody>
+          <tr><td>A,9 / soft 20</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td></tr>
+          <tr><td>A,8 / soft 19</td><td>S</td><td>S</td><td>S</td><td>S</td><td>D</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td></tr>
+          <tr><td>A,7 / soft 18</td><td>S</td><td>D</td><td>D</td><td>D</td><td>D</td><td>S</td><td>S</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>A,6 / soft 17</td><td>H</td><td>D</td><td>D</td><td>D</td><td>D</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>A,4–A,5 / soft 15–16</td><td>H</td><td>H</td><td>D</td><td>D</td><td>D</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>A,2–A,3 / soft 13–14</td><td>H</td><td>H</td><td>H</td><td>D</td><td>D</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+        </tbody>
+      </table></div>
+      <h3 class="table-group-title">Pairs</h3>
+      <div class="strategy-table-wrap"><table class="basic-table" aria-label="Pair basic strategy">
+        <thead><tr><th>Player pair</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>A</th></tr></thead>
+        <tbody>
+          <tr><td>A,A</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td></tr>
+          <tr><td>10,10</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td><td>S</td></tr>
+          <tr><td>9,9</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>S</td><td>P</td><td>P</td><td>S</td><td>S</td></tr>
+          <tr><td>8,8</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td></tr>
+          <tr><td>7,7</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>6,6</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>5,5</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>D</td><td>H</td><td>H</td></tr>
+          <tr><td>4,4</td><td>H</td><td>H</td><td>H</td><td>P</td><td>P</td><td>H</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>3,3</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+          <tr><td>2,2</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>P</td><td>H</td><td>H</td><td>H</td><td>H</td></tr>
+        </tbody>
+      </table></div>`;
+    colorizeStrategyTables();
+  }
+
+  function setSettingsOpen(open) {
+    settingsModal.classList.toggle("open", open);
+    settingsModal.setAttribute("aria-hidden", open ? "false" : "true");
+  }
+
+  function updateActiveTabClass(tabName = "play") {
+    document.body.classList.toggle("play-tab-active", tabName === "play");
+    if (tabName !== "play") document.body.classList.remove("play-help-visible");
+  }
+
+  function setHelpOpen(open) {
+    document.body.classList.toggle("play-help-visible", open);
+    helpOpenBtn.setAttribute("aria-pressed", open ? "true" : "false");
+  }
+
+  function updateCardScale() {
+    const value = Number(cardScaleRange.value || 1.15);
+    document.documentElement.style.setProperty("--game-card-scale", value.toFixed(2));
+    cardScaleValue.textContent = `${Math.round(value * 100)}%`;
+  }
+
+  updateActiveTabClass("play");
+  helpOpenBtn.setAttribute("aria-pressed", "false");
+
+  settingsOpenBtn.addEventListener("click", () => setSettingsOpen(true));
+  settingsCloseBtn.addEventListener("click", () => setSettingsOpen(false));
+  settingsBackdrop.addEventListener("click", () => setSettingsOpen(false));
+  helpOpenBtn.addEventListener("click", () => {
+    const activeTab = document.querySelector(".tab-btn.active")?.dataset.tab || "play";
+    if (activeTab !== "play") return;
+    setHelpOpen(!document.body.classList.contains("play-help-visible"));
+  });
+  helpCloseBtn.addEventListener("click", () => setHelpOpen(false));
+  helpBackdrop.addEventListener("click", () => setHelpOpen(false));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      setSettingsOpen(false);
+      setHelpOpen(false);
+    }
+  });
+  cardScaleRange.addEventListener("input", () => { updateCardScale(); updateUI(); });
+
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    el(`tab-${btn.dataset.tab}`).classList.add("active");
+    updateActiveTabClass(btn.dataset.tab);
+    updateUI();
+  }));
+
+  newRoundBtn.addEventListener("click", newRound);
+  newShoeBtn.addEventListener("click", () => resetGameShoe("manual"));
+  decksSelect.addEventListener("change", () => resetGameShoe("deck-change"));
+  showCountToggle.addEventListener("change", updateUI);
+  showCountingDotsToggle.addEventListener("change", updateUI);
+  showAdviceToggle.addEventListener("change", updateUI);
+  useCountAdviceToggle.addEventListener("change", updateUI);
+  hitBtn.addEventListener("click", hit);
+  standBtn.addEventListener("click", stand);
+  doubleBtn.addEventListener("click", doubleDown);
+  splitBtn.addEventListener("click", splitHand);
+  playBasicBtn.addEventListener("click", playBasicForHumanHand);
+  el("resetBankrollBtn").addEventListener("click", resetBankroll);
+
+  el("drillDrawBtn").addEventListener("click", drawDrillCard);
+  el("drillCheckBtn").addEventListener("click", checkDrill);
+  el("drillResetBtn").addEventListener("click", resetDrill);
+  el("strategyNewBtn").addEventListener("click", generateStrategyDrill);
+  document.querySelectorAll(".strategy-answer").forEach(btn => btn.addEventListener("click", () => answerStrategyDrill(btn.dataset.answer)));
+
+  updateCardScale();
+  renderDeviationTable();
+  renderStrategyTables();
+  resetGameShoe("manual");
+  resetDrill();
+})();
+</script>
+</body>
+</html>
