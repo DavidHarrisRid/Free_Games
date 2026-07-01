@@ -1,14 +1,821 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Card Games</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Card Game Hub</title>
+  <style>
+    :root {
+      --bg: #06150f;
+      --bg-soft: #0b2017;
+      --panel: #10281d;
+      --panel-2: #143323;
+      --panel-3: #0e241a;
+      --green: #38d976;
+      --green-soft: #1faa59;
+      --green-dark: #0f6e38;
+      --mint: #b9ffd2;
+      --text: #f2fff6;
+      --muted: #a4cbb3;
+      --line: rgba(185, 255, 210, 0.16);
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(56, 217, 118, 0.22), transparent 34rem),
+        radial-gradient(circle at top right, rgba(29, 121, 65, 0.24), transparent 32rem),
+        linear-gradient(135deg, #06150f 0%, #071a12 44%, #03100b 100%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .site-shell {
+      width: min(1600px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 32px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(8, 28, 18, 0.76);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 14px;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-width: 220px;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      background:
+        linear-gradient(145deg, #effff3 0%, #d7ffe2 45%, #3fe07f 46%, #16733c 100%);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5), 0 12px 24px rgba(0, 0, 0, 0.28);
+      display: grid;
+      place-items: center;
+      color: #063818;
+      font-weight: 950;
+      letter-spacing: -0.08em;
+      transform: rotate(-4deg);
+    }
+
+    .brand-title {
+      font-size: 1.05rem;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .brand-subtitle {
+      margin-top: 2px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill-link,
+    .small-button {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+    }
+
+    .pill-link:hover,
+    .small-button:hover {
+      border-color: rgba(185, 255, 210, 0.45);
+      background: rgba(56, 217, 118, 0.11);
+      transform: translateY(-1px);
+    }
+
+    .hero {
+      padding: 58px 6px 34px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 28px;
+      align-items: center;
+    }
+
+    .hero h1 {
+      margin: 0;
+      max-width: 860px;
+      font-size: clamp(2.45rem, 5vw, 5.4rem);
+      line-height: 0.95;
+      letter-spacing: -0.07em;
+    }
+
+    .hero h1 span {
+      color: var(--green);
+      text-shadow: 0 0 35px rgba(56, 217, 118, 0.24);
+    }
+
+    .hero p {
+      margin: 20px 0 0;
+      max-width: 720px;
+      font-size: clamp(1rem, 1.25vw, 1.28rem);
+      color: var(--muted);
+      line-height: 1.58;
+    }
+
+    .hero-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, rgba(20, 51, 35, 0.96), rgba(6, 21, 15, 0.96));
+      box-shadow: var(--shadow);
+      padding: 22px;
+      min-height: 250px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: -50% -20% auto auto;
+      width: 240px;
+      height: 240px;
+      border-radius: 999px;
+      background: rgba(56, 217, 118, 0.18);
+      filter: blur(18px);
+    }
+
+    .hero-card-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .hero-stat {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.045);
+      padding: 15px;
+    }
+
+    .hero-stat strong {
+      display: block;
+      font-size: 1.7rem;
+      color: var(--mint);
+      letter-spacing: -0.04em;
+    }
+
+    .hero-stat span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr) 180px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .ad-rail {
+      position: sticky;
+      top: 102px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .ad-box {
+      min-height: 310px;
+      border: 1px dashed rgba(185, 255, 210, 0.32);
+      border-radius: 22px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+        rgba(11, 32, 23, 0.72);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: rgba(185, 255, 210, 0.68);
+      padding: 18px;
+      font-size: 0.83rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .main-panel {
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: rgba(8, 28, 18, 0.78);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      min-width: 0;
+    }
+
+    .panel-head {
+      display: grid;
+      grid-template-columns: 1fr minmax(260px, 420px);
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--green);
+      text-transform: uppercase;
+      font-weight: 950;
+      letter-spacing: 0.11em;
+      font-size: 0.78rem;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: clamp(1.5rem, 2vw, 2.2rem);
+      letter-spacing: -0.045em;
+    }
+
+    .panel-head p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      max-width: 720px;
+    }
+
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(185, 255, 210, 0.2);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.065);
+      padding: 10px 14px;
+    }
+
+    .search-wrap svg {
+      flex: 0 0 auto;
+      opacity: 0.75;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-weight: 750;
+      min-width: 0;
+    }
+
+    .search-wrap input::placeholder {
+      color: rgba(164, 203, 179, 0.8);
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0 0 18px;
+    }
+
+    .filter-chip {
+      border: 1px solid rgba(185, 255, 210, 0.18);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      padding: 9px 13px;
+      border-radius: 999px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .filter-chip.active {
+      color: #06150f;
+      border-color: rgba(56, 217, 118, 0.75);
+      background: var(--green);
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .game-card {
+      display: grid;
+      min-height: 278px;
+      border: 1px solid rgba(185, 255, 210, 0.17);
+      border-radius: 24px;
+      background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+        var(--panel-2);
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(56, 217, 118, 0.46);
+      box-shadow: 0 22px 52px rgba(0, 0, 0, 0.32);
+    }
+
+    .game-art {
+      min-height: 118px;
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background:
+        radial-gradient(circle at top right, rgba(185, 255, 210, 0.22), transparent 11rem),
+        linear-gradient(135deg, rgba(56, 217, 118, 0.24), rgba(6, 21, 15, 0.48));
+    }
+
+    .mini-cards {
+      display: flex;
+      align-items: center;
+      padding-left: 16px;
+    }
+
+    .mini-card {
+      width: 58px;
+      height: 82px;
+      border-radius: 10px;
+      background: #f7fff9;
+      color: #0b2017;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      display: grid;
+      place-items: center;
+      font-weight: 950;
+      font-size: 1.45rem;
+      margin-left: -16px;
+      box-shadow: 0 10px 18px rgba(0, 0, 0, 0.25);
+      transform: rotate(var(--r, -4deg));
+    }
+
+    .mini-card.red {
+      color: #c13b30;
+    }
+
+    .status-badge {
+      align-self: flex-start;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: rgba(6, 21, 15, 0.72);
+      border: 1px solid rgba(185, 255, 210, 0.18);
+      color: var(--mint);
+      font-size: 0.74rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .game-body {
+      padding: 18px;
+      display: grid;
+      gap: 13px;
+    }
+
+    .game-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .game-title-row h3 {
+      margin: 0;
+      font-size: 1.3rem;
+      letter-spacing: -0.03em;
+    }
+
+    .game-type {
+      color: var(--green);
+      font-size: 0.8rem;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .game-description {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      min-height: 62px;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .tag {
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(185, 255, 210, 0.09);
+      color: var(--mint);
+      font-size: 0.75rem;
+      font-weight: 850;
+    }
+
+    .play-button {
+      justify-self: start;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 15px;
+      border-radius: 14px;
+      background: var(--green);
+      color: #06150f;
+      font-weight: 950;
+      box-shadow: 0 10px 22px rgba(56, 217, 118, 0.22);
+    }
+
+    .play-button:hover {
+      background: #5ff092;
+    }
+
+    .empty-state {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 38px 18px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .empty-state.visible {
+      display: block;
+    }
+
+    .footer {
+      margin-top: 24px;
+      padding: 18px 6px 0;
+      color: rgba(164, 203, 179, 0.82);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+    }
+
+    .code-note {
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.035);
+      padding: 15px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    .code-note code {
+      color: var(--mint);
+      font-weight: 850;
+    }
+
+    @media (max-width: 1180px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .ad-rail {
+        position: static;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        order: 2;
+      }
+
+      .ad-box {
+        min-height: 130px;
+      }
+    }
+
+    @media (max-width: 920px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 34px;
+      }
+
+      .panel-head {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        position: static;
+      }
+
+      .nav-actions {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .site-shell {
+        width: min(100% - 18px, 1600px);
+        padding-top: 10px;
+      }
+
+      .main-panel {
+        padding: 14px;
+        border-radius: 22px;
+      }
+
+      .games-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ad-rail {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-stat-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Card Games</h1>
+  <div class="site-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Card Game Hub home">
+        <div class="brand-mark">CG</div>
+        <div>
+          <div class="brand-title">Card Game Hub</div>
+          <div class="brand-subtitle">Browser card games & trainers</div>
+        </div>
+      </a>
 
-  <a href="./blackjack/">Blackjack Trainer</a>
-  <br>
-  <a href="./solitaire/">Solitaire</a>
+      <nav class="nav-actions" aria-label="Main navigation">
+        <a class="pill-link" href="#games">Games</a>
+        <a class="pill-link" href="#coming-soon">Coming soon</a>
+        <button class="small-button" type="button" id="randomGameButton">Random game</button>
+      </nav>
+    </header>
+
+    <section class="hero" aria-labelledby="heroTitle">
+      <div>
+        <h1 id="heroTitle">A clean home for <span>card games</span>.</h1>
+        <p>
+          Play browser-based card games directly on the site. The game list below is generated from one simple JavaScript array, so adding a new game later is easy.
+        </p>
+      </div>
+
+      <aside class="hero-card" aria-label="Site overview">
+        <div class="hero-card-content">
+          <p class="eyebrow">Card focused</p>
+          <h2 style="margin:0;font-size:2rem;letter-spacing:-0.05em;">Games, trainers, and variants in one place.</h2>
+          <div class="hero-stat-grid">
+            <div class="hero-stat">
+              <strong id="gameCountStat">0</strong>
+              <span>Games listed</span>
+            </div>
+            <div class="hero-stat">
+              <strong>100%</strong>
+              <span>Static website</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <main class="layout" id="games">
+      <aside class="ad-rail" aria-label="Left ad space">
+        <div class="ad-box">Ad space<br />160 × 600</div>
+      </aside>
+
+      <section class="main-panel" aria-labelledby="gamesTitle">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Game library</p>
+            <h2 id="gamesTitle">Choose a card game</h2>
+            <p>Search or filter the dynamic list. New games only need to be added to the <code>games</code> array in this file.</p>
+          </div>
+
+          <label class="search-wrap" for="gameSearch">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M10.8 18.1a7.3 7.3 0 1 1 0-14.6 7.3 7.3 0 0 1 0 14.6Z" stroke="currentColor" stroke-width="2" />
+              <path d="m16.2 16.2 4.3 4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <input id="gameSearch" type="search" placeholder="Search games, modes, tags..." autocomplete="off" />
+          </label>
+        </div>
+
+        <div class="filter-row" id="filterRow" aria-label="Game filters"></div>
+        <div class="games-grid" id="gamesGrid"></div>
+        <div class="empty-state" id="emptyState">No games found. Try a different search.</div>
+
+        <div class="code-note" id="coming-soon">
+          <strong style="color:var(--text);">How to add games:</strong>
+          edit the <code>games</code> array near the bottom of this file. Add a title, URL, type, description, status, and tags. The page will render it automatically.
+        </div>
+      </section>
+
+      <aside class="ad-rail" aria-label="Right ad space">
+        <div class="ad-box">Ad space<br />300 × 250</div>
+        <div class="ad-box">Ad space<br />300 × 250</div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <span>Card Game Hub</span>
+      <span>Static HTML site · GitHub Pages ready</span>
+    </footer>
+  </div>
+
+  <script>
+    // Add new games here. The page renders the cards, filters, search, and count automatically.
+    const games = [
+      {
+        title: "Blackjack Trainer",
+        url: "./blackjack/",
+        type: "Trainer",
+        status: "Live",
+        description: "Blackjack table, Hi-Lo counting, deviations, bots, multi-spot play, and bankroll tracking.",
+        tags: ["Blackjack", "Counting", "Trainer"],
+        cards: ["A♠", "10♥", "6♣"]
+      },
+      {
+        title: "Solitaire Suite",
+        url: "./solitaire/",
+        type: "Game",
+        status: "Live",
+        description: "Clean Solitaire collection with Klondike and Spider modes for browser play.",
+        tags: ["Solitaire", "Klondike", "Spider"],
+        cards: ["K♣", "Q♦", "J♠"]
+      },
+      {
+        title: "FreeCell",
+        url: "#coming-soon",
+        type: "Coming soon",
+        status: "Planned",
+        description: "A future skill-based solitaire variant with open information and strong planning.",
+        tags: ["Solitaire", "Planning"],
+        cards: ["4♠", "5♥", "6♣"]
+      },
+      {
+        title: "Poker Trainer",
+        url: "#coming-soon",
+        type: "Coming soon",
+        status: "Idea",
+        description: "Possible future trainer for hand strength, odds, ranges, and basic poker decisions.",
+        tags: ["Poker", "Trainer", "Odds"],
+        cards: ["A♦", "K♦", "Q♦"]
+      }
+    ];
+
+    const gamesGrid = document.getElementById("gamesGrid");
+    const emptyState = document.getElementById("emptyState");
+    const gameSearch = document.getElementById("gameSearch");
+    const filterRow = document.getElementById("filterRow");
+    const gameCountStat = document.getElementById("gameCountStat");
+    const randomGameButton = document.getElementById("randomGameButton");
+
+    let activeFilter = "All";
+
+    function getFilters() {
+      const filterSet = new Set(["All"]);
+      games.forEach(game => {
+        filterSet.add(game.type);
+        game.tags.forEach(tag => filterSet.add(tag));
+      });
+      return Array.from(filterSet);
+    }
+
+    function isRedCard(label) {
+      return label.includes("♥") || label.includes("♦");
+    }
+
+    function gameMatches(game, searchTerm) {
+      const haystack = [
+        game.title,
+        game.type,
+        game.status,
+        game.description,
+        ...game.tags
+      ].join(" ").toLowerCase();
+
+      const matchesSearch = haystack.includes(searchTerm.toLowerCase().trim());
+      const matchesFilter = activeFilter === "All" || game.type === activeFilter || game.tags.includes(activeFilter);
+      return matchesSearch && matchesFilter;
+    }
+
+    function renderFilters() {
+      filterRow.innerHTML = "";
+      getFilters().forEach(filter => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `filter-chip${filter === activeFilter ? " active" : ""}`;
+        button.textContent = filter;
+        button.addEventListener("click", () => {
+          activeFilter = filter;
+          renderFilters();
+          renderGames();
+        });
+        filterRow.appendChild(button);
+      });
+    }
+
+    function renderGames() {
+      const searchTerm = gameSearch.value || "";
+      const visibleGames = games.filter(game => gameMatches(game, searchTerm));
+      gamesGrid.innerHTML = "";
+
+      visibleGames.forEach(game => {
+        const article = document.createElement("article");
+        article.className = "game-card";
+
+        const miniCards = game.cards.map((card, index) => `
+          <div class="mini-card ${isRedCard(card) ? "red" : ""}" style="--r:${[-7, 2, 8][index % 3]}deg">${card}</div>
+        `).join("");
+
+        const tags = game.tags.map(tag => `<span class="tag">${tag}</span>`).join("");
+        const buttonLabel = game.status === "Live" ? "Play now" : "View plan";
+
+        article.innerHTML = `
+          <div class="game-art">
+            <div class="mini-cards" aria-hidden="true">${miniCards}</div>
+            <span class="status-badge">${game.status}</span>
+          </div>
+          <div class="game-body">
+            <div class="game-title-row">
+              <h3>${game.title}</h3>
+              <span class="game-type">${game.type}</span>
+            </div>
+            <p class="game-description">${game.description}</p>
+            <div class="tag-row">${tags}</div>
+            <a class="play-button" href="${game.url}">${buttonLabel} →</a>
+          </div>
+        `;
+
+        gamesGrid.appendChild(article);
+      });
+
+      emptyState.classList.toggle("visible", visibleGames.length === 0);
+      gameCountStat.textContent = games.length;
+    }
+
+    gameSearch.addEventListener("input", renderGames);
+
+    randomGameButton.addEventListener("click", () => {
+      const liveGames = games.filter(game => game.status === "Live");
+      const pool = liveGames.length ? liveGames : games;
+      const selected = pool[Math.floor(Math.random() * pool.length)];
+      window.location.href = selected.url;
+    });
+
+    renderFilters();
+    renderGames();
+  </script>
 </body>
 </html>
