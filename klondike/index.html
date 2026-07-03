@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Solitaire Suite</title>
+  <title>Klondike Solitaire</title>
   <style>
     :root {
       --bg: #07140f;
@@ -423,8 +423,8 @@
 <body>
   <div class="app">
     <header class="topbar">
-      <div class="brand"><div class="brand-mark">♠</div><span>Solitaire Suite</span></div>
-      <nav class="tabs" aria-label="Game modes">
+      <div class="brand"><div class="brand-mark">♠</div><span>Klondike Solitaire</span></div>
+      <nav class="tabs" aria-label="Game modes" hidden>
         <button class="tab active" data-mode="klondike">Klondike</button>
         <button class="tab" data-mode="spider">Spider</button>
       </nav>
@@ -600,7 +600,8 @@
       return shuffle(deck);
     }
 
-    const settings = { active: 'klondike', showAdvice: true };
+    const GAME_MODE = 'klondike';
+    const settings = { active: GAME_MODE, showAdvice: true };
     const k = { difficulty: 'relaxed', stock: [], waste: [], foundations: [[],[],[],[]], tableau: [[],[],[],[],[],[],[]], history: [], moves: 0, score: 0, redeals: 0, startMs: Date.now(), wins: Number(localStorage.getItem('solitaireKlondikeWins') || '0'), games: Number(localStorage.getItem('solitaireKlondikeGames') || '0'), lastHint: null };
     const s = { difficulty: 'easy', stock: [], tableau: Array.from({length:10}, () => []), completed: 0, history: [], moves: 0, score: 500, startMs: Date.now(), lastHint: null };
 
@@ -969,30 +970,43 @@
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       $(`page-${mode}`).classList.add('active');
     }
-    function updateTimers() { if ($('page-klondike').classList.contains('active')) $('kTime').textContent = timeText(k.startMs); if ($('page-spider').classList.contains('active')) $('sTime').textContent = timeText(s.startMs); }
+    function updateTimers() { if (GAME_MODE === 'klondike') $('kTime').textContent = timeText(k.startMs); if (GAME_MODE === 'spider') $('sTime').textContent = timeText(s.startMs); }
+
+
+    function configureStandaloneGame() {
+      const inactiveMode = GAME_MODE === 'klondike' ? 'spider' : 'klondike';
+      const inactivePage = $(`page-${inactiveMode}`);
+      if (inactivePage) inactivePage.remove();
+      document.querySelectorAll('.tab').forEach(tab => tab.remove());
+      const activePage = $(`page-${GAME_MODE}`);
+      if (activePage) activePage.classList.add('active');
+      const inactiveSetting = $(inactiveMode === 'klondike' ? 'klondikeDifficulty' : 'spiderDifficulty')?.closest('.setting-field');
+      if (inactiveSetting) inactiveSetting.remove();
+    }
 
     function bind() {
-      document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => switchMode(tab.dataset.mode)));
-      $('helpBtn').addEventListener('click', () => $(settings.active === 'klondike' ? 'klondikeHelp' : 'spiderHelp').classList.toggle('show'));
+      $('helpBtn').addEventListener('click', () => $(GAME_MODE === 'klondike' ? 'klondikeHelp' : 'spiderHelp').classList.toggle('show'));
       $('settingsBtn').addEventListener('click', () => $('settingsBackdrop').classList.add('show'));
       $('closeSettingsBtn').addEventListener('click', () => $('settingsBackdrop').classList.remove('show'));
       $('settingsBackdrop').addEventListener('click', e => { if (e.target === $('settingsBackdrop')) $('settingsBackdrop').classList.remove('show'); });
-      $('kStock').addEventListener('click', kDrawStock); $('sStock').addEventListener('click', sDealStock);
-      $('kNewBtn').addEventListener('click', kNewGame); $('kUndoBtn').addEventListener('click', kUndo); $('kHintBtn').addEventListener('click', kShowHint);
-      $('sNewBtn').addEventListener('click', sNewGame); $('sUndoBtn').addEventListener('click', sUndo); $('sHintBtn').addEventListener('click', sShowHint);
-      $('klondikeDifficulty').addEventListener('change', e => { k.difficulty = e.target.value; kNewGame(); });
-      $('spiderDifficulty').addEventListener('change', e => { s.difficulty = e.target.value; sNewGame(); });
+      if (GAME_MODE === 'klondike') $('kStock').addEventListener('click', kDrawStock);
+      if (GAME_MODE === 'spider') $('sStock').addEventListener('click', sDealStock);
+      if (GAME_MODE === 'klondike') { $('kNewBtn').addEventListener('click', kNewGame); $('kUndoBtn').addEventListener('click', kUndo); $('kHintBtn').addEventListener('click', kShowHint); }
+      if (GAME_MODE === 'spider') { $('sNewBtn').addEventListener('click', sNewGame); $('sUndoBtn').addEventListener('click', sUndo); $('sHintBtn').addEventListener('click', sShowHint); }
+      if (GAME_MODE === 'klondike') $('klondikeDifficulty').addEventListener('change', e => { k.difficulty = e.target.value; kNewGame(); });
+      if (GAME_MODE === 'spider') $('spiderDifficulty').addEventListener('change', e => { s.difficulty = e.target.value; sNewGame(); });
       $('cardSizeSlider').addEventListener('input', e => document.documentElement.style.setProperty('--card-w', `${e.target.value}px`));
-      $('showAdviceToggle').addEventListener('change', e => { settings.showAdvice = e.target.checked; kRender(); sRender(); });
-      $('winNewGameBtn').addEventListener('click', () => { $('winBackdrop').classList.remove('show'); settings.active === 'klondike' ? kNewGame() : sNewGame(); });
+      $('showAdviceToggle').addEventListener('change', e => { settings.showAdvice = e.target.checked; GAME_MODE === 'klondike' ? kRender() : sRender(); });
+      $('winNewGameBtn').addEventListener('click', () => { $('winBackdrop').classList.remove('show'); GAME_MODE === 'klondike' ? kNewGame() : sNewGame(); });
       $('winCloseBtn').addEventListener('click', () => $('winBackdrop').classList.remove('show'));
-      document.addEventListener('keydown', e => { if (e.key.toLowerCase() === 'h') settings.active === 'klondike' ? kShowHint() : sShowHint(); if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') settings.active === 'klondike' ? kUndo() : sUndo(); if (e.key === 'Escape') { $('settingsBackdrop').classList.remove('show'); $('winBackdrop').classList.remove('show'); } });
+      document.addEventListener('keydown', e => { if (e.key.toLowerCase() === 'h') GAME_MODE === 'klondike' ? kShowHint() : sShowHint(); if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') GAME_MODE === 'klondike' ? kUndo() : sUndo(); if (e.key === 'Escape') { $('settingsBackdrop').classList.remove('show'); $('winBackdrop').classList.remove('show'); } });
     }
 
+    configureStandaloneGame();
     bind();
     document.documentElement.style.setProperty('--card-w', `${$('cardSizeSlider').value}px`);
-    kNewGame();
-    sNewGame();
+    if (GAME_MODE === 'klondike') kNewGame();
+    if (GAME_MODE === 'spider') sNewGame();
     setInterval(updateTimers, 1000);
   </script>
 </body>
